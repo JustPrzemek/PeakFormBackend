@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+//TODO poczytac o globalnych exceptionach i jak je tworzyc
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -37,5 +38,15 @@ public class GlobalExceptionHandler {
         Map<String, String> response = new HashMap<>();
         response.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+    }
+
+    @ExceptionHandler(UserAlreadyExistException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistException(UserAlreadyExistException ex) {
+        ErrorResponse error = new ErrorResponse(
+                "USER_ALREADY_EXISTS",
+                ex.getMessage(),
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return ResponseEntity.badRequest().body(error);
     }
 }
