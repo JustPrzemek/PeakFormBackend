@@ -1,10 +1,16 @@
 package com.peakform.security.user.model;
 
+import com.peakform.comments.model.Comments;
+import com.peakform.followers.model.Followers;
+import com.peakform.meals.model.Meal;
+import com.peakform.posts.model.Post;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
@@ -15,6 +21,8 @@ import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -35,6 +43,18 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String username;
+
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
+    @Column(name = "profile_bio")
+    private String profileBio;
+
+    @Column(name = "location")
+    private String location;
+
+    @Pattern(regexp = "MALE|FEMALE")
+    private String gender;
 
     @Positive
     private Integer age;
@@ -87,4 +107,19 @@ public class User {
 
     @Column(name = "reset_attempts_date")
     private LocalDate resetAttemptsDate;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Post> posts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "follower")
+    private List<Followers> following;  // Kogo obserwuje
+
+    @OneToMany(mappedBy = "followed")
+    private List<Followers> followers;  // Kto go obserwuje
+
+    @OneToMany(mappedBy = "user")
+    private List<Comments> comments;
+
+    @OneToMany(mappedBy = "user")
+    private List<Meal> meals;
 }

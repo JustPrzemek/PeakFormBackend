@@ -3,6 +3,10 @@ CREATE TABLE users (
                        email VARCHAR(255) UNIQUE NOT NULL,
                        password_hash VARCHAR(255),
                        username VARCHAR(100) UNIQUE NOT NULL,
+                       profile_image_url VARCHAR(512),
+                       profile_bio TEXT,
+                       location VARCHAR(100),
+                       gender VARCHAR(50) CHECK (goal IN ('MALE', 'FEMALE')),
                        age INT CHECK (age > 0),
                        weight FLOAT CHECK (weight > 0),
                        height FLOAT CHECK (height > 0),
@@ -73,6 +77,7 @@ CREATE TABLE posts (
                        user_id BIGINT NOT NULL,
                        content TEXT NOT NULL,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       post_image_url VARCHAR(512),
                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -104,4 +109,11 @@ CREATE TABLE followers (
                            PRIMARY KEY (follower_id, followed_id),
                            FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
                            FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE weight_entries (
+                                id SERIAL PRIMARY KEY,
+                                user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                                weight FLOAT NOT NULL CHECK (weight > 0),
+                                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

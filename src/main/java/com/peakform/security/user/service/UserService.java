@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,7 @@ public class UserService {
 
     public void registerUser(RegisterRequest request){
 
-        if (userRepository.findByUsername(request.getUsername()) != null){
+        if (userRepository.findByUsername(request.getUsername()).isPresent()){
             throw new UserAlreadyExistException("Username is already in use");
         }
         if (userRepository.findByEmail(request.getEmail()) != null){
@@ -94,15 +95,16 @@ public class UserService {
     }
 
     public void updateRefreshToken(String username, String refreshToken) {
-        User user = userRepository.findByUsername(username);
-        if (user != null) {
-            user.setRefreshToken(refreshToken);
-            userRepository.save(user);
-        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        user.setRefreshToken(refreshToken);
+        userRepository.save(user);
     }
 
     private User getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
+        return userRepository.findByUsername(username)
+                .orElseThrow(() ->  new UsernameNotFoundException("User not found"));
     }
 
 
