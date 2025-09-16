@@ -13,4 +13,10 @@ public interface UserProfileService {
     EditUserDataDTO updateUserData(EditUserDataDTO dto);
 
     String updateProfileImage(MultipartFile file);
+
+    EditUserDataDTO getEditedUserData();
+
+    void updateFollowers(String username);
+
+    void unfollowUser(String username);
 }

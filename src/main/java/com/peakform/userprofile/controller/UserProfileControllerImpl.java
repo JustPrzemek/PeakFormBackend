@@ -33,4 +33,21 @@ public class UserProfileControllerImpl implements UserProfileController {
     public ResponseEntity<String> updateUserImage(MultipartFile file) {
         return ResponseEntity.ok(userProfileService.updateProfileImage(file));
     }
+
+    @Override
+    public ResponseEntity<EditUserDataDTO> getEditData() {
+        return ResponseEntity.ok(userProfileService.getEditedUserData());
+    }
+
+    @Override
+    public ResponseEntity<Void> updateFollowers(String username) {
+        userProfileService.updateFollowers(username);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> unfollowUser(String username) {
+        userProfileService.unfollowUser(username);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -1,5 +1,6 @@
 package com.peakform.security.user.service;
 
+import com.peakform.claudinary.service.AvatarService;
 import com.peakform.exceptions.InvalidVerificationTokenException;
 import com.peakform.exceptions.UserAlreadyExistException;
 import com.peakform.mailsender.MailService;
@@ -34,6 +35,7 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final CustomUserDetailService customUserDetailService;
+    private final AvatarService avatarService;
 
     public void registerUser(RegisterRequest request){
 
@@ -51,6 +53,13 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(true);
         user.setEmailVerified(false);
+
+        String avatarUrl = avatarService.generateDefaultAvatarUrl(
+                request.getUsername(),
+                request.getEmail()
+        );
+
+        user.setProfileImageUrl(avatarUrl);
 
         String token = UUID.randomUUID().toString();
         user.setEmailVerificationToken(token);

@@ -1,6 +1,6 @@
-package com.peakform.posts.model;
+package com.peakform.postlikes.model;
 
-import com.peakform.postlikes.model.PostLikes;
+import com.peakform.posts.model.Post;
 import com.peakform.security.user.model.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,7 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,14 +17,13 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Data
-@Table(name = "posts")
+@Table(name = "post_likes")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Post {
+public class PostLikes {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,16 +33,12 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "post_image_url")
-    private String postImageUrl;
-
-    @OneToMany(mappedBy = "post")
-    private List<PostLikes> likes;
 }

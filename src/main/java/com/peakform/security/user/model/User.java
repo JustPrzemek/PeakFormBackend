@@ -3,6 +3,7 @@ package com.peakform.security.user.model;
 import com.peakform.comments.model.Comments;
 import com.peakform.followers.model.Followers;
 import com.peakform.meals.model.Meal;
+import com.peakform.postlikes.model.PostLikes;
 import com.peakform.posts.model.Post;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -122,4 +123,7 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Meal> meals;
+
+    @OneToMany(mappedBy = "user")
+    private List<PostLikes> likes;
 }

@@ -31,4 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     WHERE u.username = :username
     """, nativeQuery = true)
     Optional<UserProfileDTO> findUserProfileDtoByUsername(@Param("username") String username);
+
+    Long findIdByUsername(String username);
 }

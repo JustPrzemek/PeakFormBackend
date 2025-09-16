@@ -1,7 +1,11 @@
 package com.peakform.userprofile.service;
 
 import com.peakform.claudinary.service.ImageUploadService;
+import com.peakform.exceptions.AlreadyFollowingException;
+import com.peakform.exceptions.FollowNotFoundException;
 import com.peakform.exceptions.UserAlreadyExistException;
+import com.peakform.followers.model.Followers;
+import com.peakform.followers.repository.FollowersRepository;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
 import com.peakform.userprofile.dto.EditUserDataDTO;
@@ -23,6 +27,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserRepository userRepository;
     private final UserProfileMapper userProfileMapper;
     private final ImageUploadService imageUploadService;
+    private final FollowersRepository followersRepository;
 
 
     @Override
@@ -96,4 +101,66 @@ public class UserProfileServiceImpl implements UserProfileService {
 
         return imageUrl;
     }
+
+    @Override
+    public EditUserDataDTO getEditedUserData() {
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return userProfileMapper.userToEditUserDataDTO(user);
+    }
+
+    @Override
+    public void updateFollowers(String username) {
+
+        String usernameMe = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(usernameMe)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User followedUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.equals(followedUser)) {
+            throw new IllegalArgumentException("You cannot follow yourself");
+        }
+
+        boolean exists = followersRepository.existsByFollowerAndFollowed(user, followedUser);
+        if (exists) {
+            throw new AlreadyFollowingException("User already follows " + username);
+        }
+
+        Followers followers = new Followers();
+        followers.setFollower(user);
+        followers.setFollowed(followedUser);
+
+        followersRepository.save(followers);
+    }
+
+    @Override
+    @Transactional
+    public void unfollowUser(String username) {
+
+        String usernameMe = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(usernameMe)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User followedUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (currentUser.equals(followedUser)) {
+            throw new IllegalArgumentException("You cannot unfollow yourself");
+        }
+
+        boolean exists = followersRepository.existsByFollowerAndFollowed(currentUser, followedUser);
+        if (!exists) {
+            throw new FollowNotFoundException("User do not follow" + username);
+        }
+
+        followersRepository.deleteByFollowerAndFollowed(currentUser, followedUser);
+    }
+
+
+
 }

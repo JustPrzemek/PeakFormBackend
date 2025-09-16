@@ -59,4 +59,24 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    @ExceptionHandler(AlreadyFollowingException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyFollowingException(AlreadyFollowingException ex) {
+        ErrorResponse error = new ErrorResponse(
+                "ALREADY_FOLLOWING_ERROR",
+                ex.getMessage(),
+                HttpStatus.CONFLICT.value()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(FollowNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleFollowNotFoundException(FollowNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+                "FOLLOW_NOT_FOUND_ERROR",
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
 }

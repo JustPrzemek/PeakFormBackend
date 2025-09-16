@@ -103,10 +103,11 @@ CREATE TABLE post_likes (
 );
 
 CREATE TABLE followers (
+                           id SERIAL PRIMARY KEY,
                            follower_id BIGINT NOT NULL,
                            followed_id BIGINT NOT NULL,
                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                           PRIMARY KEY (follower_id, followed_id),
+                           UNIQUE (follower_id, followed_id),
                            FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
                            FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
 );
