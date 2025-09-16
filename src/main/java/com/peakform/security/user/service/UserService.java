@@ -1,5 +1,6 @@
 package com.peakform.security.user.service;
 
+import com.peakform.claudinary.service.AvatarService;
 import com.peakform.exceptions.InvalidVerificationTokenException;
 import com.peakform.exceptions.UserAlreadyExistException;
 import com.peakform.mailsender.MailService;
@@ -16,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,10 +35,11 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final CustomUserDetailService customUserDetailService;
+    private final AvatarService avatarService;
 
     public void registerUser(RegisterRequest request){
 
-        if (userRepository.findByUsername(request.getUsername()) != null){
+        if (userRepository.findByUsername(request.getUsername()).isPresent()){
             throw new UserAlreadyExistException("Username is already in use");
         }
         if (userRepository.findByEmail(request.getEmail()) != null){
@@ -50,6 +53,13 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(true);
         user.setEmailVerified(false);
+
+        String avatarUrl = avatarService.generateDefaultAvatarUrl(
+                request.getUsername(),
+                request.getEmail()
+        );
+
+        user.setProfileImageUrl(avatarUrl);
 
         String token = UUID.randomUUID().toString();
         user.setEmailVerificationToken(token);
@@ -94,15 +104,16 @@ public class UserService {
     }
 
     public void updateRefreshToken(String username, String refreshToken) {
-        User user = userRepository.findByUsername(username);
-        if (user != null) {
-            user.setRefreshToken(refreshToken);
-            userRepository.save(user);
-        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        user.setRefreshToken(refreshToken);
+        userRepository.save(user);
     }
 
     private User getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
+        return userRepository.findByUsername(username)
+                .orElseThrow(() ->  new UsernameNotFoundException("User not found"));
     }
 
 
