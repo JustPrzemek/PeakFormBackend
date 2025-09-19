@@ -57,6 +57,9 @@ public class UserProfileServiceImpl implements UserProfileService {
             }
             user.setUsername(dto.getUsername());
         }
+        if (dto.getBioTitle() != null) {
+            user.setBioTitle(dto.getBioTitle());
+        }
         if (dto.getProfileBio() != null) {
             user.setProfileBio(dto.getProfileBio());
         }

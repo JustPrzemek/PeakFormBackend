@@ -14,16 +14,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsername(String username);
 
-    User findByEmail(String email);
+    Optional<User> findByEmail(String email);
 
-    User findByEmailVerificationToken(String token);
+    Optional<User> findByEmailVerificationToken(String token);
 
     Optional<User> findByPasswordResetToken(String token);
 
     Optional<User> findByProviderId(String providerId);
 
     @Query(value = """
-    SELECT u.username, u.profile_image_url, u.profile_bio, u.location,
+    SELECT u.username, u.profile_image_url, u.profile_bio, u.bio_title, u.location,
            (SELECT COUNT(*) FROM followers f WHERE f.followed_id = u.id) as followers_count,
            (SELECT COUNT(*) FROM followers f WHERE f.follower_id = u.id) as following_count,
            (SELECT COUNT(*) FROM posts p WHERE p.user_id = u.id) as posts_count

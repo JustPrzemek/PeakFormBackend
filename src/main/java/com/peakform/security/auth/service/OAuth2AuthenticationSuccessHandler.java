@@ -7,6 +7,7 @@ import com.peakform.security.user.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -22,30 +23,34 @@ import java.io.IOException;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
+    private final UserRepository userRepository; // Potrzebne do zapisu refresh tokena
 
     @Value("${app.oauth2.redirect-uri}")
     private String redirectUri;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    @Transactional // Upewnij się, że operacja zapisu jest w transakcji
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        String username = userPrincipal.getUsername();
 
+        // Generujemy tokeny na podstawie danych z UserPrincipal
         String accessToken = jwtUtil.generateToken(userPrincipal);
         String refreshToken = jwtUtil.generateRefreshToken(userPrincipal);
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        // Pobieramy użytkownika, aby zapisać refresh token
+        // Używamy getUsername(), bo jest unikalny.
+        User user = userRepository.findByUsername(userPrincipal.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found after OAuth2 login"));
 
         user.setRefreshToken(refreshToken);
-        userRepository.save(user);
+        userRepository.save(user); // Zapisujemy tylko refresh token
 
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .build().toUriString();
 
+        clearAuthenticationAttributes(request);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }

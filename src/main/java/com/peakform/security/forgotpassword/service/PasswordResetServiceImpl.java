@@ -8,6 +8,7 @@ import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,10 +31,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     @Transactional
     public void requestPasswordReset(ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail());
-        if (user == null) {
-            return; // nie ujawniamy czy email istnieje
-        }
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException(""));
 
         LocalDateTime now = LocalDateTime.now();
 

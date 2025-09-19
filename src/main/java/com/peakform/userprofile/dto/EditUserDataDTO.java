@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class EditUserDataDTO {
     private String username;
+    private String bioTitle;
     private String profileBio;
     private String location;
     private String gender;

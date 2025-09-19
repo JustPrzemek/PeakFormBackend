@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
@@ -50,6 +51,9 @@ public class User {
 
     @Column(name = "profile_bio")
     private String profileBio;
+
+    @Column(name = "bio_title")
+    private String bioTitle;
 
     @Column(name = "location")
     private String location;
@@ -110,20 +114,26 @@ public class User {
     private LocalDate resetAttemptsDate;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<Post> posts = new ArrayList<>();
 
     @OneToMany(mappedBy = "follower")
+    @ToString.Exclude
     private List<Followers> following;  // Kogo obserwuje
 
     @OneToMany(mappedBy = "followed")
+    @ToString.Exclude
     private List<Followers> followers;  // Kto go obserwuje
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     private List<Comments> comments;
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     private List<Meal> meals;
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     private List<PostLikes> likes;
 }

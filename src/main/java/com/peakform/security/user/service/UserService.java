@@ -7,6 +7,7 @@ import com.peakform.mailsender.MailService;
 import com.peakform.security.auth.util.JwtUtil;
 import com.peakform.security.user.dto.AuthResponse;
 import com.peakform.security.user.dto.LoginRequest;
+import com.peakform.security.user.dto.ProfilePhotoDTO;
 import com.peakform.security.user.dto.RegisterRequest;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
@@ -42,7 +43,7 @@ public class UserService {
         if (userRepository.findByUsername(request.getUsername()).isPresent()){
             throw new UserAlreadyExistException("Username is already in use");
         }
-        if (userRepository.findByEmail(request.getEmail()) != null){
+        if (userRepository.findByEmail(request.getEmail()).isPresent()){
             throw new UserAlreadyExistException("Email is already in use");
         }
 
@@ -118,7 +119,8 @@ public class UserService {
 
 
     public void verifyUserEmail(String token) {
-        User user = userRepository.findByEmailVerificationToken(token);
+        User user = userRepository.findByEmailVerificationToken(token)
+                .orElseThrow(() -> new InvalidVerificationTokenException("Invalid verification token"));
 
         if (user == null) {
             throw new InvalidVerificationTokenException("Nieprawidłowy token");
@@ -127,5 +129,13 @@ public class UserService {
         user.setEmailVerified(true);
         user.setEmailVerificationToken(null);
         userRepository.save(user);
+    }
+
+    public ProfilePhotoDTO getMyProfilePhoto() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new ProfilePhotoDTO(user.getProfileImageUrl());
     }
 }

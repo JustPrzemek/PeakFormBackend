@@ -5,6 +5,7 @@ CREATE TABLE users (
                        username VARCHAR(100) UNIQUE NOT NULL,
                        profile_image_url VARCHAR(512),
                        profile_bio TEXT,
+                       bio_title VARCHAR(255),
                        location VARCHAR(100),
                        gender VARCHAR(50) CHECK (goal IN ('MALE', 'FEMALE')),
                        age INT CHECK (age > 0),
