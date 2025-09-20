@@ -78,7 +78,8 @@ CREATE TABLE posts (
                        user_id BIGINT NOT NULL,
                        content TEXT NOT NULL,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       post_image_url VARCHAR(512),
+                       media_url VARCHAR(512),
+                       media_type VARCHAR(50),
                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

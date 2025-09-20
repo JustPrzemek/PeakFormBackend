@@ -1,8 +1,12 @@
 package com.peakform.posts.service;
 
+import com.peakform.claudinary.service.ImageUploadService;
+import com.peakform.exceptions.FileTooLargeException;
 import com.peakform.followers.repository.FollowersRepository;
 import com.peakform.pages.PagedResponse;
 import com.peakform.posts.dto.PostDTO;
+import com.peakform.posts.enumerate.MediaType;
+import com.peakform.posts.model.Post;
 import com.peakform.posts.repository.PostRepository;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
@@ -13,8 +17,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +29,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final FollowersRepository followersRepository;
+    private final ImageUploadService imageUploadService;
 
     @Override
     public PagedResponse<PostDTO> getMyPosts(int page, int size) {
@@ -88,5 +95,40 @@ public class PostServiceImpl implements PostService {
                 postsPage.getTotalPages(),
                 postsPage.isLast()
         );
+    }
+
+    @Override
+    public String createPost(String content, MultipartFile file) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Post post = new Post();
+        post.setUser(user);
+        post.setContent(content);
+
+        if (file != null && !file.isEmpty()) {
+
+            long maxSizeInBytes = 50 * 1024 * 1024; // 50 MB
+            if (file.getSize() > maxSizeInBytes) {
+                throw new FileTooLargeException("File size exceeds the limit of 50 MB");
+            }
+
+            Map<String, Object> uploadResult = imageUploadService.uploadFile(file);
+
+            String url = (String) uploadResult.get("secure_url");
+            String resourceType = (String) uploadResult.get("resource_type");
+
+            post.setMediaUrl(url);
+
+            if ("image".equals(resourceType)) {
+                post.setMediaType(MediaType.IMAGE);
+            } else if ("video".equals(resourceType)) {
+                post.setMediaType(MediaType.VIDEO);
+            }
+        }
+
+        postRepository.save(post);
+        return "Post created successfully with ID: " + post.getId();
     }
 }

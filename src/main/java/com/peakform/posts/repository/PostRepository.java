@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    @Query("SELECT new com.peakform.posts.dto.PostDTO(p.id, p.content, p.postImageUrl, p.createdAt, " +
+    @Query("SELECT new com.peakform.posts.dto.PostDTO(p.id, p.content, p.mediaUrl, p.mediaType, p.createdAt, " +
             "COUNT(DISTINCT l.id), COUNT(DISTINCT c.id)) " +
             "FROM Post p " +
             "LEFT JOIN PostLikes l ON l.post = p " +
@@ -23,7 +23,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("""
         SELECT new com.peakform.posts.dto.PostDTO(
-            p.id, p.content, p.postImageUrl, p.createdAt,
+            p.id, p.content, p.mediaUrl, p.mediaType, p.createdAt,
             COUNT(DISTINCT l.id), COUNT(DISTINCT c.id)
         )
         FROM Post p
@@ -39,7 +39,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("""
         SELECT new com.peakform.posts.dto.PostDTO(
-            p.id, p.content, p.postImageUrl, p.createdAt,
+            p.id, p.content, p.mediaUrl, p.mediaType, p.createdAt,
             COUNT(DISTINCT l.id), COUNT(DISTINCT c.id)
         )
         FROM Post p

@@ -2,6 +2,7 @@ package com.peakform.userprofile.service;
 
 import com.peakform.claudinary.service.ImageUploadService;
 import com.peakform.exceptions.AlreadyFollowingException;
+import com.peakform.exceptions.FileTooLargeException;
 import com.peakform.exceptions.FollowNotFoundException;
 import com.peakform.exceptions.UserAlreadyExistException;
 import com.peakform.followers.model.Followers;
@@ -13,10 +14,12 @@ import com.peakform.userprofile.dto.UserProfileDTO;
 import com.peakform.userprofile.mapper.UserProfileMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Objects;
 
@@ -88,6 +91,15 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public String updateProfileImage(MultipartFile file) {
+
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
+        }
+
+        long maxSizeInBytes = 5 * 1024 * 1024; // 5 MB
+        if (file.getSize() > maxSizeInBytes) {
+            throw new FileTooLargeException("Profile image size exceeds the limit of 5 MB");
+        }
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)

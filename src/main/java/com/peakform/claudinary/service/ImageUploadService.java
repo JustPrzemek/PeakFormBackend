@@ -27,6 +27,33 @@ public class ImageUploadService {
         }
     }
 
+    public Map<String, Object> uploadFile(MultipartFile file) {
+        try {
+            String contentType = file.getContentType();
+            String resourceType = "raw";
+
+            if (contentType != null) {
+                if (contentType.startsWith("image/")) {
+                    resourceType = "image";
+                } else if (contentType.startsWith("video/")) {
+                    resourceType = "video";
+                }
+            }
+
+            Map<String, Object> options = ObjectUtils.asMap(
+                    "folder", "post_media",
+                    "resource_type", resourceType
+            );
+
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
+
+            return uploadResult;
+
+        } catch (IOException e) {
+            throw new ImageUploadException("Failed to upload file to Cloudinary", e);
+        }
+    }
+
     public void deleteImage(String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
             return;

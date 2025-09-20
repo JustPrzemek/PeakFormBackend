@@ -6,6 +6,7 @@ import com.peakform.posts.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,5 +30,11 @@ public class PostControllerImpl implements PostController{
                                                                int size
     ) {
         return ResponseEntity.ok(postService.getUserPosts(username, page, size));
+    }
+
+    public ResponseEntity<String> createPost(
+            String content,
+            MultipartFile file) {
+        return ResponseEntity.ok(postService.createPost(content, file));
     }
 }
