@@ -72,8 +72,8 @@ public class UserProfileServiceImpl implements UserProfileService {
         if (dto.getGender() != null) {
             user.setGender(dto.getGender());
         }
-        if (dto.getAge() != null) {
-            user.setAge(dto.getAge());
+        if (dto.getDateOfBirth() != null) {
+            user.setDateOfBirth(dto.getDateOfBirth());
         }
         if (dto.getWeight() != null) {
             user.setWeight(dto.getWeight());

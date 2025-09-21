@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,7 +15,7 @@ public class EditUserDataDTO {
     private String profileBio;
     private String location;
     private String gender;
-    private Integer age;
+    private LocalDate dateOfBirth;
     private Float weight;
     private Float height;
     private String goal;

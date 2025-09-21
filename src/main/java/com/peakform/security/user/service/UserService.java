@@ -50,7 +50,7 @@ public class UserService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setAge(request.getAge());
+        user.setDateOfBirth(request.getDateOfBirth());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(true);
         user.setEmailVerified(false);

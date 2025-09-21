@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -61,8 +62,9 @@ public class User {
     @Pattern(regexp = "MALE|FEMALE")
     private String gender;
 
-    @Positive
-    private Integer age;
+    @Past(message = "Birth date must be from the past.")
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
 
     @Positive
     private Float weight;
