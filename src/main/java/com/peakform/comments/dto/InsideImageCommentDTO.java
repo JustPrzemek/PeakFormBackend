@@ -7,9 +7,10 @@ import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
-public class CommentsDTO {
+public class InsideImageCommentDTO {
     private Long commentId;
     private String content;
     private String username;
+    private String profileImageUrl;
     private LocalDateTime createdAt;
 }

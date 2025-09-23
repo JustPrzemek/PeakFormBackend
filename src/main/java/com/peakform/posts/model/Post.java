@@ -1,8 +1,10 @@
 package com.peakform.posts.model;
 
+import com.peakform.comments.model.Comments;
 import com.peakform.postlikes.model.PostLikes;
 import com.peakform.posts.enumerate.MediaType;
 import com.peakform.security.user.model.User;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,6 +23,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -54,4 +57,7 @@ public class Post {
 
     @OneToMany(mappedBy = "post")
     private List<PostLikes> likes;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comments> comments = new ArrayList<>();
 }

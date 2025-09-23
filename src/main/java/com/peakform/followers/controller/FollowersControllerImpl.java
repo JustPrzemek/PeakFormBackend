@@ -1,6 +1,7 @@
 package com.peakform.followers.controller;
 
 import com.peakform.followers.dto.FollowDTO;
+import com.peakform.followers.dto.FollowResponseDTO;
 import com.peakform.followers.service.FollowersService;
 import com.peakform.pages.PagedResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,5 +24,17 @@ public class FollowersControllerImpl implements FollowersController {
     @Override
     public ResponseEntity<PagedResponse<FollowDTO>> getMyFollowing(Pageable pageable) {
         return ResponseEntity.ok(followersService.getMyFollowing(pageable));
+    }
+
+    @Override
+    public ResponseEntity<Void> followUser(String usernameToFollow) {
+        followersService.followUser(usernameToFollow);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> unfollowUser(String usernameToUnfollow) {
+        followersService.unfollowUser(usernameToUnfollow);
+        return ResponseEntity.noContent().build();
     }
 }

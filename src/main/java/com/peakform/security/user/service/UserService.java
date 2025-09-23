@@ -4,15 +4,21 @@ import com.peakform.claudinary.service.AvatarService;
 import com.peakform.exceptions.InvalidVerificationTokenException;
 import com.peakform.exceptions.UserAlreadyExistException;
 import com.peakform.mailsender.MailService;
+import com.peakform.pages.PagedResponse;
 import com.peakform.security.auth.util.JwtUtil;
 import com.peakform.security.user.dto.AuthResponse;
 import com.peakform.security.user.dto.LoginRequest;
 import com.peakform.security.user.dto.ProfilePhotoDTO;
 import com.peakform.security.user.dto.RegisterRequest;
+import com.peakform.security.user.dto.UserSearchDTO;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
+import com.peakform.security.user.repository.UserSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,8 +28,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -137,5 +145,34 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return new ProfilePhotoDTO(user.getProfileImageUrl());
+    }
+
+    public PagedResponse<UserSearchDTO> searchUsers(String query, Pageable pageable) {
+        String currentUsername = getCurrentUsername();
+
+        Specification<User> spec = UserSpecification.searchByUsernameExcludingCurrentUser(query, currentUsername);
+        Page<User> usersPage = userRepository.findAll(spec, pageable);
+
+        List<UserSearchDTO> dtoList = usersPage.getContent().stream()
+                .map(user -> new UserSearchDTO(user.getId(), user.getUsername(), user.getProfileImageUrl()))
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(
+                dtoList,
+                usersPage.getNumber(),
+                usersPage.getSize(),
+                usersPage.getTotalElements(),
+                usersPage.getTotalPages(),
+                usersPage.isLast()
+        );
+    }
+
+    private String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
     }
 }
