@@ -34,16 +34,19 @@ public class UserProfileServiceImpl implements UserProfileService {
 
 
     @Override
-    public UserProfileDTO getUserProfile(String username){
-        return userRepository.findUserProfileDtoByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
+    public UserProfileDTO getUserProfile(String username) {
+        User currentUser = getCurrentUser();
+
+        return userRepository.findUserProfileDtoByUsername(username, currentUser.getId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
     @Override
-    public UserProfileDTO getUserMe(){
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findUserProfileDtoByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
+    public UserProfileDTO getUserMe() {
+        User currentUser = getCurrentUser();
+
+        return userRepository.findUserProfileDtoByUsername(currentUser.getUsername(), currentUser.getId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + currentUser.getUsername()));
     }
 
     @Override
@@ -176,6 +179,10 @@ public class UserProfileServiceImpl implements UserProfileService {
         followersRepository.deleteByFollowerAndFollowed(currentUser, followedUser);
     }
 
-
+    private User getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
 
 }

@@ -20,6 +20,10 @@ public interface FollowersRepository extends JpaRepository<Followers, Long> {
 
     Page<Followers> findByFollower(User follower, Pageable pageable);
 
+    Page<Followers> findByFollowedAndFollower_UsernameContainingIgnoreCase(User followed, String username, Pageable pageable);
+
+    Page<Followers> findByFollowerAndFollowed_UsernameContainingIgnoreCase(User follower, String username, Pageable pageable);
+
     boolean existsByFollowerIdAndFollowedId(Long followerId, Long followedId);
 
     Page<Followers> findByFollowedAndFollower(User followed, User followedUsername, Pageable pageable);

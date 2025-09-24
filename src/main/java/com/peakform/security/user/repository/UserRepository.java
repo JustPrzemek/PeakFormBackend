@@ -27,11 +27,15 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     SELECT u.username, u.profile_image_url, u.profile_bio, u.bio_title, u.location,
            (SELECT COUNT(*) FROM followers f WHERE f.followed_id = u.id) as followers_count,
            (SELECT COUNT(*) FROM followers f WHERE f.follower_id = u.id) as following_count,
-           (SELECT COUNT(*) FROM posts p WHERE p.user_id = u.id) as posts_count
+           (SELECT COUNT(*) FROM posts p WHERE p.user_id = u.id) as posts_count,
+           EXISTS (SELECT 1 FROM followers f WHERE f.followed_id = u.id AND f.follower_id = :currentUserId) as is_following
     FROM users u
     WHERE u.username = :username
     """, nativeQuery = true)
-    Optional<UserProfileDTO> findUserProfileDtoByUsername(@Param("username") String username);
+    Optional<UserProfileDTO> findUserProfileDtoByUsername(
+            @Param("username") String username,
+            @Param("currentUserId") Long currentUserId
+    );
 
     Long findIdByUsername(String username);
 }

@@ -17,7 +17,7 @@ public interface PostLikesController {
     @Operation(summary = "Add a like to a post")
     ResponseEntity<PostLikeResponseDTO> addLike(@PathVariable Long postId);
 
-    @DeleteMapping("/{postId}/like")
+    @DeleteMapping("/{postId}/unlike")
     @Operation(summary = "Remove a like from a post")
     ResponseEntity<PostLikeResponseDTO> removeLike(@PathVariable Long postId);
 }

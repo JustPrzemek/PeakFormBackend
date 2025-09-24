@@ -29,9 +29,8 @@ public interface FollowersController {
             description = "Returns a list of followers with optional filtering by username"
     )
     ResponseEntity<PagedResponse<FollowDTO>> getMyFollowers(
-            @PageableDefault(page = 0, size = 20, sort = "follower.username", direction = Sort.Direction.ASC)
-            Pageable pageable,
-            @RequestParam(required = false) String username);
+            @PageableDefault(page = 0, size = 20) Pageable pageable,
+            @RequestParam(required = false) String search);
 
 
     @GetMapping("/my/following")
@@ -40,15 +39,28 @@ public interface FollowersController {
             description = "Returns data blblblblbablabalbal opisac"
     )
     ResponseEntity<PagedResponse<FollowDTO>> getMyFollowing(
-            @PageableDefault(page = 0, size = 20, sort = "followed.username", direction = Sort.Direction.ASC)
-            Pageable pageable);
+            @PageableDefault(page = 0, size = 20) Pageable pageable,
+            @RequestParam(required = false) String search);
 
+    @GetMapping("/{username}/followers")
+    @Operation(summary = "Get followers for a specific user")
+    ResponseEntity<PagedResponse<FollowDTO>> getUserFollowers(
+            @PathVariable String username,
+            @PageableDefault(page = 0, size = 20) Pageable pageable,
+            @RequestParam(required = false) String search);
 
-    @PostMapping("/{username}/follow")
-    @Operation(summary = "Add a like to a post")
-    ResponseEntity<Void> followUser(@PathVariable String username);
+    @GetMapping("/{username}/following")
+    @Operation(summary = "Get following for a specific user")
+    ResponseEntity<PagedResponse<FollowDTO>> getUserFollowing(
+            @PathVariable String username,
+            @PageableDefault(page = 0, size = 20) Pageable pageable,
+            @RequestParam(required = false) String search);
 
-    @DeleteMapping("/{username}/follow")
-    @Operation(summary = "Remove a like from a post")
-    ResponseEntity<Void> unfollowUser(@PathVariable String username);
+    @PostMapping("/{usernameToFollow}/follow")
+    @Operation(summary = "Follow a user")
+    ResponseEntity<Void> followUser(@PathVariable String usernameToFollow);
+
+    @DeleteMapping("/{usernameToUnfollow}/unfollow")
+    @Operation(summary = "Unfollow a user")
+    ResponseEntity<Void> unfollowUser(@PathVariable String usernameToUnfollow);
 }

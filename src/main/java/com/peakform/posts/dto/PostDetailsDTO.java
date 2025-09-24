@@ -1,5 +1,6 @@
 package com.peakform.posts.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.peakform.comments.dto.InsideImageCommentDTO;
 import com.peakform.pages.PagedResponse;
 import com.peakform.posts.enumerate.MediaType;
@@ -20,5 +21,7 @@ public class PostDetailsDTO {
     private Long likesCount;
     private Long commentsCount;
     private LocalDateTime createdAt;
+    @JsonProperty("likedByUser")
+    private boolean isLikedByUser;
     private PagedResponse<InsideImageCommentDTO> comments;
 }

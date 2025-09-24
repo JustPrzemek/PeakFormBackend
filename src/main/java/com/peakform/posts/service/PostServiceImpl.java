@@ -8,6 +8,7 @@ import com.peakform.comments.repository.CommentsRepository;
 import com.peakform.exceptions.FileTooLargeException;
 import com.peakform.followers.repository.FollowersRepository;
 import com.peakform.pages.PagedResponse;
+import com.peakform.postlikes.repository.PostLikesRepository;
 import com.peakform.posts.dto.FollowersPostsDTO;
 import com.peakform.posts.dto.PostDTO;
 import com.peakform.posts.dto.PostDetailsDTO;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +44,7 @@ public class PostServiceImpl implements PostService {
     private final FollowersRepository followersRepository;
     private final ImageUploadService imageUploadService;
     private final CommentsRepository commentsRepository;
+    private final PostLikesRepository postLikesRepository;
 
     @Override
     public PagedResponse<PostDTO> getMyPosts(int page, int size) {
@@ -69,20 +72,18 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<FollowersPostsDTO> postsPage = postRepository.findPostsFromFollowedUsers(me.getId(), pageable);
+
+        Page<FollowersPostsDTO> postsPage = postRepository.findPostsFromFollowedUsers(me.getId(), me.getId(), pageable);
 
         List<FollowersPostsDTO> postsContent = postsPage.getContent();
 
-
         if (!postsContent.isEmpty()) {
-
             List<Long> postIds = postsContent.stream()
                     .map(FollowersPostsDTO::getId)
                     .collect(Collectors.toList());
 
             List<Comments> allComments = commentsRepository.findLatestCommentsForPosts(postIds);
 
-            // 4. Pogrupuj komentarze po ID posta
             Map<Long, List<CommentsDTO>> commentsMap = allComments.stream()
                     .collect(Collectors.groupingBy(
                             comment -> comment.getPost().getId(),
@@ -178,13 +179,19 @@ public class PostServiceImpl implements PostService {
     @Transactional(readOnly = true)
     public PostDetailsDTO getPostDetails(Long postId, int page, int size) {
 
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Current user not found"));
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
 
+        boolean isLiked = postLikesRepository.existsByUserAndPost(currentUser, post);
+
+        long likesCount = postLikesRepository.countByPost(post);
+
         Pageable commentPageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
         Page<Comments> commentsPage = commentsRepository.findByPostId(postId, commentPageable);
-
         Page<InsideImageCommentDTO> commentDTOsPage = commentsPage.map(comment -> new InsideImageCommentDTO(
                 comment.getId(),
                 comment.getContent(),
@@ -192,7 +199,6 @@ public class PostServiceImpl implements PostService {
                 comment.getUser().getProfileImageUrl(),
                 comment.getCreatedAt()
         ));
-
         PagedResponse<InsideImageCommentDTO> customCommentResponse = new PagedResponse<>(
                 commentDTOsPage.getContent(),
                 commentDTOsPage.getNumber(),
@@ -209,9 +215,10 @@ public class PostServiceImpl implements PostService {
                 post.getMediaUrl(),
                 post.getMediaType(),
                 post.getContent(),
-                (long) post.getLikes().size(),
+                likesCount, // Użyj nowego licznika
                 commentDTOsPage.getTotalElements(),
                 post.getCreatedAt(),
+                isLiked, // Przekaż informację o polubieniu
                 customCommentResponse
         );
     }

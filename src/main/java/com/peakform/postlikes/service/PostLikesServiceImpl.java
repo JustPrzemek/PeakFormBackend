@@ -30,8 +30,7 @@ public class PostLikesServiceImpl implements PostLikesService {
         Post post = findPostById(postId);
 
         if (postLikesRepository.existsByUserAndPost(user, post)) {
-            long totalLikes = postLikesRepository.countByPost(post);
-            return new PostLikeResponseDTO(totalLikes, true);
+            return new PostLikeResponseDTO(true);
         }
 
         PostLikes like = new PostLikes();
@@ -39,8 +38,7 @@ public class PostLikesServiceImpl implements PostLikesService {
         like.setPost(post);
 
         postLikesRepository.save(like);
-        long newTotalLikes = postLikesRepository.countByPost(post);
-        return new PostLikeResponseDTO(newTotalLikes, true);
+        return new PostLikeResponseDTO( true);
     }
 
     @Override
@@ -54,8 +52,7 @@ public class PostLikesServiceImpl implements PostLikesService {
 
         postLikesRepository.delete(like);
 
-        long newTotalLikes = postLikesRepository.countByPost(post);
-        return new PostLikeResponseDTO(newTotalLikes, false);
+        return new PostLikeResponseDTO( false);
     }
 
     private User getCurrentUser() {

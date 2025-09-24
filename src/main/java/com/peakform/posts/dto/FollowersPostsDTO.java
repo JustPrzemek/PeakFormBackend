@@ -22,9 +22,10 @@ public class FollowersPostsDTO {
     private LocalDateTime createdAt;
     private Long likesCount;
     private Long commentsCount;
+    private boolean isLikedByUser;
     private List<CommentsDTO> comments;
 
-    public FollowersPostsDTO(Long id, String username, String profileImageUrl, String content, String mediaUrl, MediaType mediaType, LocalDateTime createdAt, Long likesCount, Long commentsCount) {
+    public FollowersPostsDTO(Long id, String username, String profileImageUrl, String content, String mediaUrl, MediaType mediaType, LocalDateTime createdAt, Long likesCount, Long commentsCount, boolean isLikedByUser) {
         this.id = id;
         this.username = username;
         this.profileImageUrl = profileImageUrl;
@@ -34,5 +35,6 @@ public class FollowersPostsDTO {
         this.createdAt = createdAt;
         this.likesCount = likesCount;
         this.commentsCount = commentsCount;
+        this.isLikedByUser = isLikedByUser;
     }
 }

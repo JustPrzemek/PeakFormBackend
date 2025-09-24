@@ -17,13 +17,29 @@ public class FollowersControllerImpl implements FollowersController {
     private final FollowersService followersService;
 
     @Override
-    public ResponseEntity<PagedResponse<FollowDTO>> getMyFollowers(Pageable pageable, String username) {
-        return ResponseEntity.ok(followersService.getMyFollowers(pageable, username));
+    public ResponseEntity<PagedResponse<FollowDTO>> getMyFollowers(Pageable pageable, String search) {
+        return ResponseEntity.ok(followersService.getMyFollowers(pageable, search));
     }
 
     @Override
-    public ResponseEntity<PagedResponse<FollowDTO>> getMyFollowing(Pageable pageable) {
-        return ResponseEntity.ok(followersService.getMyFollowing(pageable));
+    public ResponseEntity<PagedResponse<FollowDTO>> getMyFollowing(Pageable pageable, String search) {
+        return ResponseEntity.ok(followersService.getMyFollowing(pageable, search));
+    }
+
+    @Override
+    public ResponseEntity<PagedResponse<FollowDTO>> getUserFollowers(
+            String username,
+            Pageable pageable,
+            String search) {
+        return ResponseEntity.ok(followersService.getUserFollowers(username, pageable, search));
+    }
+
+    @Override
+    public ResponseEntity<PagedResponse<FollowDTO>> getUserFollowing(
+            String username,
+            Pageable pageable,
+            String search) {
+        return ResponseEntity.ok(followersService.getUserFollowing(username, pageable, search));
     }
 
     @Override

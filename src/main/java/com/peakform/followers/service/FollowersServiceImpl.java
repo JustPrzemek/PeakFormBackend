@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -28,68 +29,50 @@ public class FollowersServiceImpl implements FollowersService {
     private final UserRepository userRepository;
 
     @Override
-    public PagedResponse<FollowDTO> getMyFollowers(Pageable pageable, String username) {
+    public PagedResponse<FollowDTO> getMyFollowers(Pageable pageable, String search) {
+        User currentUser = getCurrentUser();
+        return getUserFollowers(currentUser.getUsername(), pageable, search);
+    }
 
-        User user = getCurrentUser();
-        User followedUsername = findUserByUsername(username);
+    @Override
+    public PagedResponse<FollowDTO> getMyFollowing(Pageable pageable, String search) {
+        User currentUser = getCurrentUser();
+        return getUserFollowing(currentUser.getUsername(), pageable, search);
+    }
 
+    @Override
+    public PagedResponse<FollowDTO> getUserFollowers(String username, Pageable pageable, String search) {
+        User user = findUserByUsername(username);
         Page<Followers> followersPage;
 
-        if (username != null && !username.isBlank()) {
-            followersPage = followersRepository.findByFollowedAndFollower(
-                    user, followedUsername, pageable);
+        if (search != null && !search.isBlank()) {
+            followersPage = followersRepository.findByFollowedAndFollower_UsernameContainingIgnoreCase(user, search, pageable);
         } else {
             followersPage = followersRepository.findByFollowed(user, pageable);
         }
 
-        List<FollowDTO> content = followersPage.stream()
-                .map(f -> new FollowDTO(
-                        f.getFollower().getUsername(),
-                        f.getFollower().getProfileImageUrl()
-                ))
-                .toList();
-
-        return new PagedResponse<>(
-                content,
-                followersPage.getNumber(),
-                followersPage.getSize(),
-                followersPage.getTotalElements(),
-                followersPage.getTotalPages(),
-                followersPage.isLast()
-        );
+        return mapToPagedResponse(followersPage, Followers::getFollower);
     }
 
     @Override
-    public PagedResponse<FollowDTO> getMyFollowing(Pageable pageable) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+    public PagedResponse<FollowDTO> getUserFollowing(String username, Pageable pageable, String search) {
+        User user = findUserByUsername(username);
+        Page<Followers> followingPage;
 
-        User user = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new UsernameNotFoundException(currentUsername));
+        if (search != null && !search.isBlank()) {
+            followingPage = followersRepository.findByFollowerAndFollowed_UsernameContainingIgnoreCase(user, search, pageable);
+        } else {
+            followingPage = followersRepository.findByFollower(user, pageable);
+        }
 
-        Page<Followers> followingPage = followersRepository.findByFollower(user, pageable);
-
-        List<FollowDTO> content = followingPage.stream()
-                .map(f -> new FollowDTO(
-                        f.getFollowed().getUsername(),
-                        f.getFollowed().getProfileImageUrl()
-                ))
-                .toList();
-
-        return new PagedResponse<>(
-                content,
-                followingPage.getNumber(),
-                followingPage.getSize(),
-                followingPage.getTotalElements(),
-                followingPage.getTotalPages(),
-                followingPage.isLast()
-        );
+        return mapToPagedResponse(followingPage, Followers::getFollowed);
     }
 
     @Override
     @Transactional
-    public void followUser(String username) {
+    public void followUser(String usernameToFollow) {
         User follower = getCurrentUser();
-        User followed = findUserByUsername(username);
+        User followed = findUserByUsername(usernameToFollow);
 
         if (follower.getId().equals(followed.getId())) {
             throw new IllegalArgumentException("You cannot follow yourself.");
@@ -109,9 +92,9 @@ public class FollowersServiceImpl implements FollowersService {
 
     @Override
     @Transactional
-    public void unfollowUser(String username) {
+    public void unfollowUser(String usernameToUnfollow) {
         User follower = getCurrentUser();
-        User followed = findUserByUsername(username);
+        User followed = findUserByUsername(usernameToUnfollow);
 
         Followers followToDelete = followersRepository.findByFollowerAndFollowed(follower, followed)
                 .orElseThrow(() -> new IllegalStateException("You are not following this user, so you cannot unfollow them."));
@@ -127,6 +110,22 @@ public class FollowersServiceImpl implements FollowersService {
 
     private User findUserByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    }
+
+    private PagedResponse<FollowDTO> mapToPagedResponse(Page<Followers> page, Function<Followers, User> userExtractor) {
+        List<FollowDTO> content = page.getContent().stream()
+                .map(userExtractor)
+                .map(user -> new FollowDTO(user.getUsername(), user.getProfileImageUrl()))
+                .toList();
+
+        return new PagedResponse<>(
+                content,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
     }
 }

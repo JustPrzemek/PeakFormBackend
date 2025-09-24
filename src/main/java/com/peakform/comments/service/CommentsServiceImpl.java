@@ -2,6 +2,7 @@ package com.peakform.comments.service;
 
 import com.peakform.comments.dto.AddCommentDTO;
 import com.peakform.comments.dto.CommentsDTO;
+import com.peakform.comments.dto.ResponseCommentDTO;
 import com.peakform.comments.mapper.CommentsMapper;
 import com.peakform.comments.model.Comments;
 import com.peakform.comments.repository.CommentsRepository;
@@ -48,7 +49,7 @@ public class CommentsServiceImpl implements CommentsService {
 
     @Override
     @Transactional
-    public CommentsDTO addCommentForPost(AddCommentDTO addCommentDTO) {
+    public ResponseCommentDTO addCommentForPost(AddCommentDTO addCommentDTO) {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
@@ -64,6 +65,6 @@ public class CommentsServiceImpl implements CommentsService {
 
         Comments savedComment = commentsRepository.save(newComment);
 
-        return commentsMapper.toCommentDTO(savedComment);
+        return commentsMapper.toResponseCommentDTO(savedComment);
     }
 }

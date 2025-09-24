@@ -2,6 +2,7 @@ package com.peakform.comments.controller;
 
 import com.peakform.comments.dto.AddCommentDTO;
 import com.peakform.comments.dto.CommentsDTO;
+import com.peakform.comments.dto.ResponseCommentDTO;
 import com.peakform.comments.service.CommentsService;
 import com.peakform.pages.PagedResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,8 @@ public class CommentsControllerImpl implements CommentsController {
     }
 
     @Override
-    public ResponseEntity<CommentsDTO> addComment(AddCommentDTO addCommentDTO) {
-        CommentsDTO createdComment = commentsService.addCommentForPost(addCommentDTO);
+    public ResponseEntity<ResponseCommentDTO> addComment(AddCommentDTO addCommentDTO) {
+        ResponseCommentDTO createdComment = commentsService.addCommentForPost(addCommentDTO);
         return new ResponseEntity<>(createdComment, HttpStatus.CREATED);
     }
 }

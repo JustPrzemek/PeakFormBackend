@@ -8,9 +8,11 @@ import org.springframework.data.domain.Pageable;
 
 public interface FollowersService {
 
-    PagedResponse<FollowDTO> getMyFollowers(Pageable pageable, String username);
+    PagedResponse<FollowDTO> getMyFollowers(Pageable pageable, String search);
+    PagedResponse<FollowDTO> getMyFollowing(Pageable pageable, String search);
 
-    PagedResponse<FollowDTO> getMyFollowing(Pageable pageable);
+    PagedResponse<FollowDTO> getUserFollowers(String username, Pageable pageable, String search);
+    PagedResponse<FollowDTO> getUserFollowing(String username, Pageable pageable, String search);
 
     void followUser(String usernameToFollow);
 

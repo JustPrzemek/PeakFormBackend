@@ -32,15 +32,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         p.mediaType,
         p.createdAt,
         CAST((SELECT COUNT(l.id) FROM PostLikes l WHERE l.post.id = p.id) AS long),
-        CAST((SELECT COUNT(c.id) FROM Comments c WHERE c.post.id = p.id) AS long)
+        CAST((SELECT COUNT(c.id) FROM Comments c WHERE c.post.id = p.id) AS long),
+        (SELECT COUNT(pl.id) FROM PostLikes pl WHERE pl.post.id = p.id AND pl.user.id = :currentUserId) > 0
     )
     FROM Post p
     JOIN p.user u
     WHERE u.id IN (
-        SELECT f.followed.id FROM Followers f WHERE f.follower.id = :userId
+        SELECT f.followed.id FROM Followers f WHERE f.follower.id = :followerId
     )
 """)
-    Page<FollowersPostsDTO> findPostsFromFollowedUsers(@Param("userId") Long userId, Pageable pageable);
+    Page<FollowersPostsDTO> findPostsFromFollowedUsers(@Param("followerId") Long followerId, @Param("currentUserId") Long currentUserId, Pageable pageable);
 
 
     @Query("""

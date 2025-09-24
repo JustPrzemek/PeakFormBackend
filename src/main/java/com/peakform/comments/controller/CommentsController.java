@@ -2,6 +2,7 @@ package com.peakform.comments.controller;
 
 import com.peakform.comments.dto.AddCommentDTO;
 import com.peakform.comments.dto.CommentsDTO;
+import com.peakform.comments.dto.ResponseCommentDTO;
 import com.peakform.pages.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,5 +35,5 @@ public interface CommentsController {
             summary = "",
             description = ""
     )
-    ResponseEntity<CommentsDTO> addComment(@Valid @RequestBody AddCommentDTO addCommentDTO);
+    ResponseEntity<ResponseCommentDTO> addComment(@Valid @RequestBody AddCommentDTO addCommentDTO);
 }

@@ -14,4 +14,5 @@ public class UserProfileDTO {
     private Long followersCount;
     private Long followingCount;
     private Long postsCount;
+    private boolean isFollowing;
 }
