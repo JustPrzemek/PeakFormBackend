@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface FollowersRepository extends JpaRepository<Followers, Long> {
 
@@ -18,8 +20,15 @@ public interface FollowersRepository extends JpaRepository<Followers, Long> {
 
     Page<Followers> findByFollower(User follower, Pageable pageable);
 
-    boolean existsByFollowerIdAndFollowedId(Long followerId, Long followedId);
-
     Page<Followers> findByFollowedAndFollower_UsernameContainingIgnoreCase(User followed, String username, Pageable pageable);
 
+    Page<Followers> findByFollowerAndFollowed_UsernameContainingIgnoreCase(User follower, String username, Pageable pageable);
+
+    boolean existsByFollowerIdAndFollowedId(Long followerId, Long followedId);
+
+    Page<Followers> findByFollowedAndFollower(User followed, User followedUsername, Pageable pageable);
+
+    Optional<Followers> findByFollowerAndFollowed(User follower, User followed);
+
+    long countByFollowed(User userToFollow);
 }

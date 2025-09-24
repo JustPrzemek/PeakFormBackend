@@ -40,8 +40,8 @@ public interface UserProfileController {
 
     @PatchMapping("/updateProfileData")
     @Operation(
-            summary = "update profile data",
-            description = "returns"
+            summary = "Update current user's profile data",
+            description = "Partially updates the profile data for the authenticated user."
     )
     ResponseEntity<EditUserDataDTO> updateUserData(@RequestBody EditUserDataDTO editUserDataDTO);
 

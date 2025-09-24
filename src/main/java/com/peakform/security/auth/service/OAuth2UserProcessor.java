@@ -20,9 +20,7 @@ public class OAuth2UserProcessor {
             return userOptional.get();
         }
 
-        User existingUserByEmail = userRepository.findByEmail(email);
-        if (existingUserByEmail != null) {
-            // Można połączyć konto lub rzucić błąd
+        if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("User with this email already exists. Please log in with your password.");
         }
 

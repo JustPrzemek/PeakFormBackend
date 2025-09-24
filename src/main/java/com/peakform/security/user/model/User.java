@@ -13,11 +13,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
@@ -51,14 +53,18 @@ public class User {
     @Column(name = "profile_bio")
     private String profileBio;
 
+    @Column(name = "bio_title")
+    private String bioTitle;
+
     @Column(name = "location")
     private String location;
 
     @Pattern(regexp = "MALE|FEMALE")
     private String gender;
 
-    @Positive
-    private Integer age;
+    @Past(message = "Birth date must be from the past.")
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
 
     @Positive
     private Float weight;
@@ -110,20 +116,26 @@ public class User {
     private LocalDate resetAttemptsDate;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<Post> posts = new ArrayList<>();
 
     @OneToMany(mappedBy = "follower")
+    @ToString.Exclude
     private List<Followers> following;  // Kogo obserwuje
 
     @OneToMany(mappedBy = "followed")
+    @ToString.Exclude
     private List<Followers> followers;  // Kto go obserwuje
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     private List<Comments> comments;
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     private List<Meal> meals;
 
     @OneToMany(mappedBy = "user")
+    @ToString.Exclude
     private List<PostLikes> likes;
 }

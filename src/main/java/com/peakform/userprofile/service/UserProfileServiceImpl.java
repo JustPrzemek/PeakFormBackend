@@ -2,6 +2,7 @@ package com.peakform.userprofile.service;
 
 import com.peakform.claudinary.service.ImageUploadService;
 import com.peakform.exceptions.AlreadyFollowingException;
+import com.peakform.exceptions.FileTooLargeException;
 import com.peakform.exceptions.FollowNotFoundException;
 import com.peakform.exceptions.UserAlreadyExistException;
 import com.peakform.followers.model.Followers;
@@ -13,10 +14,12 @@ import com.peakform.userprofile.dto.UserProfileDTO;
 import com.peakform.userprofile.mapper.UserProfileMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Objects;
 
@@ -31,16 +34,19 @@ public class UserProfileServiceImpl implements UserProfileService {
 
 
     @Override
-    public UserProfileDTO getUserProfile(String username){
-        return userRepository.findUserProfileDtoByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
+    public UserProfileDTO getUserProfile(String username) {
+        User currentUser = getCurrentUser();
+
+        return userRepository.findUserProfileDtoByUsername(username, currentUser.getId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
     @Override
-    public UserProfileDTO getUserMe(){
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findUserProfileDtoByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
+    public UserProfileDTO getUserMe() {
+        User currentUser = getCurrentUser();
+
+        return userRepository.findUserProfileDtoByUsername(currentUser.getUsername(), currentUser.getId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + currentUser.getUsername()));
     }
 
     @Override
@@ -57,6 +63,9 @@ public class UserProfileServiceImpl implements UserProfileService {
             }
             user.setUsername(dto.getUsername());
         }
+        if (dto.getBioTitle() != null) {
+            user.setBioTitle(dto.getBioTitle());
+        }
         if (dto.getProfileBio() != null) {
             user.setProfileBio(dto.getProfileBio());
         }
@@ -66,8 +75,8 @@ public class UserProfileServiceImpl implements UserProfileService {
         if (dto.getGender() != null) {
             user.setGender(dto.getGender());
         }
-        if (dto.getAge() != null) {
-            user.setAge(dto.getAge());
+        if (dto.getDateOfBirth() != null) {
+            user.setDateOfBirth(dto.getDateOfBirth());
         }
         if (dto.getWeight() != null) {
             user.setWeight(dto.getWeight());
@@ -85,6 +94,15 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     @Override
     public String updateProfileImage(MultipartFile file) {
+
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
+        }
+
+        long maxSizeInBytes = 5 * 1024 * 1024; // 5 MB
+        if (file.getSize() > maxSizeInBytes) {
+            throw new FileTooLargeException("Profile image size exceeds the limit of 5 MB");
+        }
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
@@ -161,6 +179,10 @@ public class UserProfileServiceImpl implements UserProfileService {
         followersRepository.deleteByFollowerAndFollowed(currentUser, followedUser);
     }
 
-
+    private User getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
 
 }

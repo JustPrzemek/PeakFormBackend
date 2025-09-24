@@ -79,4 +79,14 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
+
+    @ExceptionHandler(FileTooLargeException.class)
+    public ResponseEntity<ErrorResponse> handleFileTooLargeException(FileTooLargeException ex) {
+        ErrorResponse error = new ErrorResponse(
+                "FILE_TOO_LARGE_ERROR",
+                ex.getMessage(),
+                HttpStatus.PAYLOAD_TOO_LARGE.value()
+        );
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+    }
 }

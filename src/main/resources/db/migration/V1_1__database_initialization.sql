@@ -5,9 +5,10 @@ CREATE TABLE users (
                        username VARCHAR(100) UNIQUE NOT NULL,
                        profile_image_url VARCHAR(512),
                        profile_bio TEXT,
+                       bio_title VARCHAR(255),
                        location VARCHAR(100),
-                       gender VARCHAR(50) CHECK (goal IN ('MALE', 'FEMALE')),
-                       age INT CHECK (age > 0),
+                       gender VARCHAR(50) CHECK (gender IN ('MALE', 'FEMALE')),
+                       date_of_birth DATE CHECK (date_of_birth < CURRENT_DATE),
                        weight FLOAT CHECK (weight > 0),
                        height FLOAT CHECK (height > 0),
                        goal VARCHAR(50) CHECK (goal IN ('reduction', 'bulk', 'maintenance')),
@@ -26,6 +27,11 @@ CREATE TABLE users (
                        reset_attempts_date DATE
 
 );
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX idx_users_username_trgm ON users
+    USING GIN (username gin_trgm_ops);
 
 CREATE UNIQUE INDEX idx_provider_id ON users (auth_provider, provider_id)
     WHERE auth_provider != 'local' AND provider_id IS NOT NULL;
@@ -77,7 +83,8 @@ CREATE TABLE posts (
                        user_id BIGINT NOT NULL,
                        content TEXT NOT NULL,
                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       post_image_url VARCHAR(512),
+                       media_url VARCHAR(512),
+                       media_type VARCHAR(50),
                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
