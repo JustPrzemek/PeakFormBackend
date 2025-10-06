@@ -14,6 +14,10 @@ import com.peakform.security.user.dto.UserSearchDTO;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
 import com.peakform.security.user.repository.UserSpecification;
+import com.peakform.trainings.workoutplans.model.WorkoutPlans;
+import com.peakform.trainings.workoutplans.repository.WorkoutPlanRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -45,6 +49,7 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailService customUserDetailService;
     private final AvatarService avatarService;
+    private final WorkoutPlanRepository workoutPlanRepository;
 
     public void registerUser(RegisterRequest request){
 
@@ -174,5 +179,18 @@ public class UserService {
         } else {
             return principal.toString();
         }
+    }
+
+    @Transactional
+    public void setActivePlan(Long planId) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        WorkoutPlans workoutPlans = workoutPlanRepository.findById(planId)
+                .orElseThrow(() -> new EntityNotFoundException("Workout plan not found"));
+        
+        user.setActiveWorkoutPlan(workoutPlans);
+        userRepository.save(user);
     }
 }

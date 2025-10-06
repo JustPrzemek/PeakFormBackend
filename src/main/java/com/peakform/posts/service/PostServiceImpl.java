@@ -215,10 +215,10 @@ public class PostServiceImpl implements PostService {
                 post.getMediaUrl(),
                 post.getMediaType(),
                 post.getContent(),
-                likesCount, // Użyj nowego licznika
+                likesCount,
                 commentDTOsPage.getTotalElements(),
                 post.getCreatedAt(),
-                isLiked, // Przekaż informację o polubieniu
+                isLiked,
                 customCommentResponse
         );
     }
