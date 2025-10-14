@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "workout_plan_exercises")
 @NoArgsConstructor
 @AllArgsConstructor
-public class WorkoutPlaneExercises {
+public class WorkoutPlanExercises {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,5 +1,7 @@
 package com.peakform.trainings.workoutplans.controller;
 
+import com.peakform.security.user.model.User;
+import com.peakform.trainings.workoutplanexercises.dto.PlanExerciseDetailsDto;
 import com.peakform.trainings.workoutplans.dto.AddExerciseToPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.CreateWorkoutPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.PlanGenerationRequestDto;
@@ -73,5 +75,13 @@ public class WorkoutPlanControllerImpl implements WorkoutPlanController {
             UpdateExerciseInPlanRequestDto requestDto) {
         WorkoutPlanDetailDto updatedPlan = workoutPlanService.updateExerciseInPlan(planId, workoutPlanExerciseId, requestDto);
         return ResponseEntity.ok(updatedPlan);
+    }
+
+    @Override
+    public ResponseEntity<List<PlanExerciseDetailsDto>> getExercisesForPlanDay(
+            Long planId,
+            String dayIdentifier) {
+        List<PlanExerciseDetailsDto> exercises = workoutPlanService.getExercisesForPlanDay(planId, dayIdentifier);
+        return ResponseEntity.ok(exercises);
     }
 }

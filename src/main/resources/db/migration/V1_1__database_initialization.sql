@@ -75,6 +75,7 @@ CREATE TABLE training_sessions (
                                    start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                    end_time TIMESTAMP,
                                    notes TEXT,
+                                   day_identifier VARCHAR(50) NOT NULL DEFAULT 'A',
                                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                                    FOREIGN KEY (plan_id) REFERENCES workout_plans(id) ON DELETE SET NULL
 );

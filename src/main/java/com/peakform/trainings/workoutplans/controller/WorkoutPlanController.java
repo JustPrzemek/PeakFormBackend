@@ -1,5 +1,6 @@
 package com.peakform.trainings.workoutplans.controller;
 
+import com.peakform.trainings.workoutplanexercises.dto.PlanExerciseDetailsDto;
 import com.peakform.trainings.workoutplans.dto.AddExerciseToPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.CreateWorkoutPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.PlanGenerationRequestDto;
@@ -58,4 +59,9 @@ public interface WorkoutPlanController {
             @PathVariable Long planId,
             @PathVariable Long workoutPlanExerciseId,
             @RequestBody @Valid UpdateExerciseInPlanRequestDto requestDto);
+
+    @GetMapping("/{planId}/days/{dayIdentifier}")
+    ResponseEntity<List<PlanExerciseDetailsDto>> getExercisesForPlanDay(
+            @PathVariable Long planId,
+            @PathVariable String dayIdentifier);
 }

@@ -4,7 +4,8 @@ import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
 import com.peakform.trainings.exercises.model.Exercises;
 import com.peakform.trainings.exercises.repository.ExercisesRepository;
-import com.peakform.trainings.workoutplanexercises.model.WorkoutPlaneExercises;
+import com.peakform.trainings.workoutplanexercises.dto.PlanExerciseDetailsDto;
+import com.peakform.trainings.workoutplanexercises.model.WorkoutPlanExercises;
 import com.peakform.trainings.workoutplanexercises.repository.WorkoutPlanExerciseRepository;
 import com.peakform.trainings.workoutplans.dto.AddExerciseToPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.CreateWorkoutPlanRequestDto;
@@ -14,9 +15,9 @@ import com.peakform.trainings.workoutplans.dto.UpdateExerciseInPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanDetailDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanSummaryDto;
 import com.peakform.trainings.workoutplans.model.WorkoutPlans;
-import com.peakform.trainings.workoutplans.repository.WorkoutPlanRepository;
+import com.peakform.trainings.workoutplans.repository.WorkoutPlansRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,10 +34,11 @@ import java.util.stream.Collectors;
 public class WorkoutPlanServiceImpl implements WorkoutPlanService {
 
     private final UserRepository userRepository;
-    private final WorkoutPlanRepository workoutPlanRepository;
+    private final WorkoutPlansRepository workoutPlanRepository;
     private final WorkoutPlanExerciseRepository workoutPlanExerciseRepository;
     private final ExercisesRepository exercisesRepository;
     private final List<PlanGenerationStrategy> generationStrategies;
+    private final WorkoutPlanExerciseRepository planExercisesRepository;
 
     @Override
     @Transactional
@@ -88,7 +91,7 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         Exercises exercise = exercisesRepository.findById(requestDto.getExerciseId())
                 .orElseThrow(() -> new EntityNotFoundException("Exercise not found with id: " + requestDto.getExerciseId()));
 
-        WorkoutPlaneExercises wpe = new WorkoutPlaneExercises();
+        WorkoutPlanExercises wpe = new WorkoutPlanExercises();
         wpe.setWorkoutPlans(plan);
         wpe.setExercises(exercise);
         wpe.setDayIdentifier(requestDto.getDayIdentifier());
@@ -102,16 +105,51 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<WorkoutPlanSummaryDto> getUserPlans() {
         User user = getCurrentUser();
+        String goal = user.getGoal();
         List<WorkoutPlans> plans = workoutPlanRepository.findByUserId(user.getId());
 
-        return plans.stream().map(plan -> new WorkoutPlanSummaryDto(
-                plan.getId(),
-                plan.getName(),
-                plan.getCreatedAt(),
-                user.getActiveWorkoutPlan() != null && user.getActiveWorkoutPlan().getId().equals(plan.getId())
-        )).collect(Collectors.toList());
+        Optional<Long> activePlanId = Optional.ofNullable(user.getActiveWorkoutPlan())
+                .map(WorkoutPlans::getId);
+
+        return plans.stream().map(plan -> {
+            List<String> days = planExercisesRepository.findDistinctDayIdentifiersByWorkoutPlanId(plan.getId());
+            return WorkoutPlanSummaryDto.builder()
+                    .id(plan.getId())
+                    .name(plan.getName())
+                    .createdAt(plan.getCreatedAt())
+                    .isActive(activePlanId.map(id -> id.equals(plan.getId())).orElse(false))
+                    .days(days)
+                    .goal(goal)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PlanExerciseDetailsDto> getExercisesForPlanDay(Long planId, String dayIdentifier) {
+        User user = getCurrentUser();
+        // Krok 1: Znajdź plan i sprawdź, czy należy do użytkownika
+        WorkoutPlans plan = workoutPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Plan not found with id: " + planId));
+
+        if (!plan.getUser().getId().equals(user.getId())) {
+            throw new SecurityException("You are not authorized to access this plan.");
+        }
+
+        // Krok 2: Pobierz ćwiczenia dla tego planu i dnia
+        List<WorkoutPlanExercises> planExercises = planExercisesRepository.findByWorkoutPlansAndDayIdentifier(plan, dayIdentifier);
+
+        // Krok 3: Zmapuj na DTO
+        return planExercises.stream().map(pe -> PlanExerciseDetailsDto.builder()
+                .exerciseId(pe.getExercises().getId())
+                .name(pe.getExercises().getName())
+                .muscleGroup(pe.getExercises().getMuscleGroup())
+                .sets(pe.getSets())
+                .reps(pe.getReps())
+                .build()
+        ).collect(Collectors.toList());
     }
 
     @Override
@@ -135,7 +173,7 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         // Sprawdzamy, czy zarówno plan, jak i ćwiczenie w planie należą do użytkownika
         WorkoutPlans plan = findPlanByIdAndCheckOwnership(planId, user);
 
-        WorkoutPlaneExercises exerciseInPlan = workoutPlanExerciseRepository.findById(workoutPlanExerciseId)
+        WorkoutPlanExercises exerciseInPlan = workoutPlanExerciseRepository.findById(workoutPlanExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Exercise in plan not found with id: " + workoutPlanExerciseId));
 
         if (!exerciseInPlan.getWorkoutPlans().getId().equals(plan.getId())) {
@@ -151,7 +189,7 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         User user = getCurrentUser();
         findPlanByIdAndCheckOwnership(planId, user);
 
-        WorkoutPlaneExercises exerciseInPlan = workoutPlanExerciseRepository.findById(workoutPlanExerciseId)
+        WorkoutPlanExercises exerciseInPlan = workoutPlanExerciseRepository.findById(workoutPlanExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Exercise in plan not found with id: " + workoutPlanExerciseId));
 
         // Sprawdzenie, czy edytowane ćwiczenie na pewno należy do tego użytkownika (przez plan)
@@ -172,11 +210,11 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         User user = getCurrentUser();
         WorkoutPlans plan = findPlanByIdAndCheckOwnership(planId, user);
 
-        List<WorkoutPlaneExercises> exercisesInPlan = workoutPlanExerciseRepository.findByWorkoutPlansId(planId);
+        List<WorkoutPlanExercises> exercisesInPlan = workoutPlanExerciseRepository.findByWorkoutPlansId(planId);
 
         Map<String, List<ExerciseInPlanDto>> days = exercisesInPlan.stream()
                 .collect(Collectors.groupingBy(
-                        WorkoutPlaneExercises::getDayIdentifier,
+                        WorkoutPlanExercises::getDayIdentifier,
                         Collectors.mapping(
                                 wpe -> new ExerciseInPlanDto(
                                         wpe.getId(),

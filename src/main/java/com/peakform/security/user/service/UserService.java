@@ -10,14 +10,14 @@ import com.peakform.security.user.dto.AuthResponse;
 import com.peakform.security.user.dto.LoginRequest;
 import com.peakform.security.user.dto.ProfilePhotoDTO;
 import com.peakform.security.user.dto.RegisterRequest;
+import com.peakform.security.user.dto.SuggestedUsersDto;
 import com.peakform.security.user.dto.UserSearchDTO;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
 import com.peakform.security.user.repository.UserSpecification;
 import com.peakform.trainings.workoutplans.model.WorkoutPlans;
-import com.peakform.trainings.workoutplans.repository.WorkoutPlanRepository;
+import com.peakform.trainings.workoutplans.repository.WorkoutPlansRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -31,7 +31,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +51,7 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailService customUserDetailService;
     private final AvatarService avatarService;
-    private final WorkoutPlanRepository workoutPlanRepository;
+    private final WorkoutPlansRepository workoutPlanRepository;
 
     public void registerUser(RegisterRequest request){
 
@@ -192,5 +194,25 @@ public class UserService {
         
         user.setActiveWorkoutPlan(workoutPlans);
         userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SuggestedUsersDto> getSuggestedUsers() {
+        String username = getCurrentUsername();
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Nie znaleziono użytkownika: " + username));
+
+        if (currentUser.getLocation() == null || currentUser.getLocation().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<User> suggestedUsers = userRepository.findSuggestedUsersForPostgres(
+                currentUser.getLocation(),
+                currentUser.getId()
+        );
+
+        return suggestedUsers.stream()
+                .map(user -> new SuggestedUsersDto(user.getUsername(), user.getProfileImageUrl()))
+                .collect(Collectors.toList());
     }
 }

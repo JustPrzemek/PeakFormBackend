@@ -3,11 +3,11 @@ package com.peakform.trainings.workoutplans.service;
 import com.peakform.security.user.model.User;
 import com.peakform.trainings.exercises.model.Exercises;
 import com.peakform.trainings.exercises.repository.ExercisesRepository;
-import com.peakform.trainings.workoutplanexercises.model.WorkoutPlaneExercises;
+import com.peakform.trainings.workoutplanexercises.model.WorkoutPlanExercises;
 import com.peakform.trainings.workoutplanexercises.repository.WorkoutPlanExerciseRepository;
 import com.peakform.trainings.workoutplans.dto.PlanGenerationRequestDto;
 import com.peakform.trainings.workoutplans.model.WorkoutPlans;
-import com.peakform.trainings.workoutplans.repository.WorkoutPlanRepository;
+import com.peakform.trainings.workoutplans.repository.WorkoutPlansRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BeginnerReductionStrategy implements PlanGenerationStrategy {
 
-    private final WorkoutPlanRepository workoutPlanRepository;
+    private final WorkoutPlansRepository workoutPlanRepository;
     private final ExercisesRepository exercisesRepository;
     private final WorkoutPlanExerciseRepository workoutPlanExerciseRepository;
 
@@ -56,7 +56,7 @@ public class BeginnerReductionStrategy implements PlanGenerationStrategy {
         Exercises exercise = exercisesRepository.findByName(exerciseName)
                 .orElseThrow(() -> new RuntimeException("Nie znaleziono ćwiczenia: " + exerciseName));
 
-        WorkoutPlaneExercises wpe = new WorkoutPlaneExercises();
+        WorkoutPlanExercises wpe = new WorkoutPlanExercises();
         wpe.setWorkoutPlans(plan);
         wpe.setExercises(exercise);
         wpe.setDayIdentifier(day);

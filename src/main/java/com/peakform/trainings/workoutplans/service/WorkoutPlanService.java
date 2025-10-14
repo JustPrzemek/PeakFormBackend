@@ -1,5 +1,7 @@
 package com.peakform.trainings.workoutplans.service;
 
+import com.peakform.security.user.model.User;
+import com.peakform.trainings.workoutplanexercises.dto.PlanExerciseDetailsDto;
 import com.peakform.trainings.workoutplans.dto.AddExerciseToPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.CreateWorkoutPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.PlanGenerationRequestDto;
@@ -26,5 +28,7 @@ public interface WorkoutPlanService {
     void removeExerciseFromPlan(Long planId, Long workoutPlanExerciseId);
 
     void deletePlan(Long planId);
+
+    List<PlanExerciseDetailsDto> getExercisesForPlanDay(Long planId, String dayIdentifier);
 
 }
