@@ -5,13 +5,17 @@ import com.peakform.followers.model.Followers;
 import com.peakform.meals.model.Meal;
 import com.peakform.postlikes.model.PostLikes;
 import com.peakform.posts.model.Post;
+import com.peakform.trainings.workoutplans.model.WorkoutPlans;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
@@ -138,4 +142,8 @@ public class User {
     @OneToMany(mappedBy = "user")
     @ToString.Exclude
     private List<PostLikes> likes;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "active_workout_plan_id")
+    private WorkoutPlans activeWorkoutPlan;
 }

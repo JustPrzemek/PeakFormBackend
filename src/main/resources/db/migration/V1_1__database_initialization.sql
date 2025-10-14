@@ -24,7 +24,8 @@ CREATE TABLE users (
                        password_reset_expires TIMESTAMP,
                        last_password_reset_request TIMESTAMP,
                        reset_attempts_today INT,
-                       reset_attempts_date DATE
+                       reset_attempts_date DATE,
+                       active_workout_plan_id BIGINT
 
 );
 
@@ -53,9 +54,11 @@ CREATE TABLE exercises (
                            id SERIAL PRIMARY KEY,
                            name VARCHAR(255) NOT NULL,
                            muscle_group VARCHAR(100) NOT NULL,
-                           difficulty INT CHECK (difficulty BETWEEN 1 AND 5)
+                           difficulty VARCHAR(50),
+                           description TEXT,
+                           video_url VARCHAR(512),
+                           type VARCHAR(50) DEFAULT 'STRENGTH'
 );
-
 
 CREATE TABLE workout_plans (
                                id SERIAL PRIMARY KEY,
@@ -65,6 +68,29 @@ CREATE TABLE workout_plans (
                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE training_sessions (
+                                   id SERIAL PRIMARY KEY,
+                                   user_id BIGINT NOT NULL,
+                                   plan_id BIGINT,
+                                   start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                   end_time TIMESTAMP,
+                                   notes TEXT,
+                                   day_identifier VARCHAR(50) NOT NULL DEFAULT 'A',
+                                   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                                   FOREIGN KEY (plan_id) REFERENCES workout_plans(id) ON DELETE SET NULL
+);
+
+CREATE TABLE exercise_logs (
+                               id SERIAL PRIMARY KEY,
+                               session_id BIGINT NOT NULL,
+                               exercise_id BIGINT NOT NULL,
+                               set_number INT NOT NULL,
+                               reps INT NOT NULL,
+                               weight FLOAT NOT NULL,
+                               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               FOREIGN KEY (session_id) REFERENCES training_sessions(id) ON DELETE CASCADE,
+                               FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
+);
 
 CREATE TABLE workout_plan_exercises (
                                         id SERIAL PRIMARY KEY,
@@ -73,6 +99,7 @@ CREATE TABLE workout_plan_exercises (
                                         sets INT CHECK (sets > 0),
                                         reps INT CHECK (reps > 0),
                                         rest_time INT CHECK (rest_time >= 0),
+                                        day_identifier VARCHAR(50) NOT NULL DEFAULT 'A',
                                         FOREIGN KEY (workout_plan_id) REFERENCES workout_plans(id) ON DELETE CASCADE,
                                         FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
 );
@@ -125,3 +152,7 @@ CREATE TABLE weight_entries (
                                 weight FLOAT NOT NULL CHECK (weight > 0),
                                 recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE users
+    ADD CONSTRAINT fk_users_active_workout_plan
+        FOREIGN KEY (active_workout_plan_id) REFERENCES workout_plans(id) ON DELETE SET NULL;
