@@ -5,7 +5,9 @@ import lombok.Data;
 @Data
 public class ExerciseLogRequestDto {
     private Long exerciseId;
-    private int setNumber;
-    private int reps;
-    private float weight;
+    private Integer setNumber;
+    private Integer reps;
+    private Float weight;
+    private Integer durationMinutes;
+    private Float distanceKm;
 }

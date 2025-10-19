@@ -65,6 +65,7 @@ CREATE TABLE workout_plans (
                                user_id BIGINT NOT NULL,
                                name VARCHAR(255) NOT NULL,
                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               description TEXT,
                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -84,9 +85,11 @@ CREATE TABLE exercise_logs (
                                id SERIAL PRIMARY KEY,
                                session_id BIGINT NOT NULL,
                                exercise_id BIGINT NOT NULL,
-                               set_number INT NOT NULL,
-                               reps INT NOT NULL,
-                               weight FLOAT NOT NULL,
+                               set_number INT,
+                               reps INT,
+                               duration_minutes INT CHECK ( duration_minutes > 0 ),
+                               distance_km FLOAT CHECK ( distance_km > 0 ),
+                               weight FLOAT,
                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                FOREIGN KEY (session_id) REFERENCES training_sessions(id) ON DELETE CASCADE,
                                FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
@@ -98,6 +101,8 @@ CREATE TABLE workout_plan_exercises (
                                         exercise_id BIGINT NOT NULL,
                                         sets INT CHECK (sets > 0),
                                         reps INT CHECK (reps > 0),
+                                        duration_minutes INT CHECK ( duration_minutes > 0 ),
+                                        distance_km FLOAT CHECK ( distance_km > 0 ),
                                         rest_time INT CHECK (rest_time >= 0),
                                         day_identifier VARCHAR(50) NOT NULL DEFAULT 'A',
                                         FOREIGN KEY (workout_plan_id) REFERENCES workout_plans(id) ON DELETE CASCADE,

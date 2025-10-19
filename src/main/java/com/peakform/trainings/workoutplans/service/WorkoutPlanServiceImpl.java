@@ -91,17 +91,27 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         Exercises exercise = exercisesRepository.findById(requestDto.getExerciseId())
                 .orElseThrow(() -> new EntityNotFoundException("Exercise not found with id: " + requestDto.getExerciseId()));
 
-        WorkoutPlanExercises wpe = new WorkoutPlanExercises();
-        wpe.setWorkoutPlans(plan);
-        wpe.setExercises(exercise);
-        wpe.setDayIdentifier(requestDto.getDayIdentifier());
-        wpe.setSets(requestDto.getSets());
-        wpe.setReps(requestDto.getReps());
-        wpe.setRestTime(requestDto.getRestTime());
+        WorkoutPlanExercises wpe = getWorkoutPlanExercises(requestDto, plan, exercise);
 
         workoutPlanExerciseRepository.save(wpe);
 
         return getPlanDetails(planId);
+    }
+
+    private static WorkoutPlanExercises getWorkoutPlanExercises(AddExerciseToPlanRequestDto requestDto, WorkoutPlans plan, Exercises exercise) {
+        WorkoutPlanExercises wpe = new WorkoutPlanExercises();
+        wpe.setWorkoutPlans(plan);
+        wpe.setExercises(exercise);
+        wpe.setDayIdentifier(requestDto.getDayIdentifier());
+        if ("STRENGTH".equalsIgnoreCase(exercise.getType())) {
+            wpe.setSets(requestDto.getSets());
+            wpe.setReps(requestDto.getReps());
+            wpe.setRestTime(requestDto.getRestTime());
+        } else if ("CARDIO".equalsIgnoreCase(exercise.getType())) {
+            wpe.setDurationMinutes(requestDto.getDurationMinutes());
+            wpe.setDistanceKm(requestDto.getDistanceKm());
+        }
+        return wpe;
     }
 
     @Override
@@ -130,7 +140,6 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
     @Transactional(readOnly = true)
     public List<PlanExerciseDetailsDto> getExercisesForPlanDay(Long planId, String dayIdentifier) {
         User user = getCurrentUser();
-        // Krok 1: Znajdź plan i sprawdź, czy należy do użytkownika
         WorkoutPlans plan = workoutPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Plan not found with id: " + planId));
 
@@ -138,16 +147,17 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
             throw new SecurityException("You are not authorized to access this plan.");
         }
 
-        // Krok 2: Pobierz ćwiczenia dla tego planu i dnia
         List<WorkoutPlanExercises> planExercises = planExercisesRepository.findByWorkoutPlansAndDayIdentifier(plan, dayIdentifier);
 
-        // Krok 3: Zmapuj na DTO
         return planExercises.stream().map(pe -> PlanExerciseDetailsDto.builder()
                 .exerciseId(pe.getExercises().getId())
                 .name(pe.getExercises().getName())
                 .muscleGroup(pe.getExercises().getMuscleGroup())
+                .exerciseType(pe.getExercises().getType())
                 .sets(pe.getSets())
                 .reps(pe.getReps())
+                .durationMinutes(pe.getDurationMinutes())
+                .distanceKm(pe.getDistanceKm())
                 .build()
         ).collect(Collectors.toList());
     }
@@ -220,9 +230,12 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
                                         wpe.getId(),
                                         wpe.getExercises().getId(),
                                         wpe.getExercises().getName(),
+                                        wpe.getExercises().getType(),
                                         wpe.getSets(),
                                         wpe.getReps(),
-                                        wpe.getRestTime()
+                                        wpe.getRestTime(),
+                                        wpe.getDurationMinutes(),
+                                        wpe.getDistanceKm()
                                 ),
                                 Collectors.toList()
                         )
@@ -232,6 +245,7 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         WorkoutPlanDetailDto planDetailsDto = new WorkoutPlanDetailDto();
         planDetailsDto.setId(plan.getId());
         planDetailsDto.setName(plan.getName());
+        planDetailsDto.setDescription(plan.getDescription());
         planDetailsDto.setDays(days);
         planDetailsDto.setActive(activePlan);
 

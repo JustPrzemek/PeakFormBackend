@@ -39,4 +39,7 @@ public class Exercises {
 
     @Column(name = "video_url")
     private String videoUrl;
+
+    @Column(name = "type")
+    private String type;
 }

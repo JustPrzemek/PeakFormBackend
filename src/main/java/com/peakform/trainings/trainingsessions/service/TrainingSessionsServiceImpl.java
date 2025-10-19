@@ -125,9 +125,14 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
             dto.setExerciseId(planExercise.getExercises().getId());
             dto.setName(planExercise.getExercises().getName());
             dto.setMuscleGroup(planExercise.getExercises().getMuscleGroup());
+            dto.setExerciseType(planExercise.getExercises().getType()); // Przekazujemy typ
+
             dto.setSets(planExercise.getSets());
             dto.setReps(planExercise.getReps());
             dto.setRestTime(planExercise.getRestTime());
+            dto.setDurationMinutes(planExercise.getDurationMinutes());
+            dto.setDistanceKm(planExercise.getDistanceKm());
+
             return dto;
         }).collect(Collectors.toList());
 
@@ -188,9 +193,12 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
         newLog.setTrainingSessions(session);
         newLog.setExercises(exercise);
         newLog.setSetNumber(requestDto.getSetNumber());
+        newLog.setCreatedAt(LocalDateTime.now());
+
         newLog.setReps(requestDto.getReps());
         newLog.setWeight(requestDto.getWeight());
-        newLog.setCreatedAt(LocalDateTime.now());
+        newLog.setDurationMinutes(requestDto.getDurationMinutes());
+        newLog.setDistanceKm(requestDto.getDistanceKm());
 
         ExerciseLogs savedLog = logsRepository.save(newLog);
         return trainingMapper.toExerciseLogDto(savedLog);
@@ -228,15 +236,23 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
                 ExerciseLogs log = new ExerciseLogs();
                 log.setTrainingSessions(savedSession);
                 log.setExercises(exercise);
-                log.setSetNumber(setCounter++);
-                log.setReps(setDto.getReps());
-                log.setWeight(setDto.getWeight());
                 log.setCreatedAt(workoutDateTime);
+
+                if ("STRENGTH".equalsIgnoreCase(exercise.getType())) {
+                    log.setSetNumber(setCounter++);
+                    log.setReps(setDto.getReps());
+                    log.setWeight(setDto.getWeight());
+                } else { 
+                    log.setSetNumber(1);
+                    log.setDurationMinutes(setDto.getDurationMinutes());
+                    log.setDistanceKm(setDto.getDistanceKm());
+                }
                 allLogs.add(log);
             }
         }
 
         logsRepository.saveAll(allLogs);
+        savedSession.setLogs(allLogs);
 
         return trainingMapper.toTrainingSessionDto(savedSession);
     }

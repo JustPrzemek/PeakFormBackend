@@ -46,4 +46,9 @@ public class WorkoutPlanExercises {
     @Column(name = "day_identifier", nullable = false)
     private String dayIdentifier;
 
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Column(name = "distance_km")
+    private Float distanceKm;
 }

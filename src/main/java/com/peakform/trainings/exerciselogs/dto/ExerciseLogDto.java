@@ -9,8 +9,10 @@ public class ExerciseLogDto {
     private Long id;
     private Long exerciseId;
     private String exerciseName;
-    private int setNumber;
-    private int reps;
-    private float weight;
+    private Integer setNumber;
+    private Integer reps;
+    private Float weight;
+    private Integer durationMinutes;
+    private Float distanceKm;
     private LocalDateTime createdAt;
 }
