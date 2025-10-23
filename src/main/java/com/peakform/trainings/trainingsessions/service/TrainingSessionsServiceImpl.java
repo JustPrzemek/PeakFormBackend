@@ -1,6 +1,10 @@
 package com.peakform.trainings.trainingsessions.service;
 
+import com.peakform.exceptions.BadRequestException;
+import com.peakform.exceptions.ResourceNotFoundException;
+import com.peakform.pages.PagedResponse;
 import com.peakform.security.user.model.User;
+import com.peakform.security.user.repository.UserRepository;
 import com.peakform.trainings.exerciselogs.dto.ExerciseLogDto;
 import com.peakform.trainings.exerciselogs.dto.ExerciseLogRequestDto;
 import com.peakform.trainings.exerciselogs.model.ExerciseLogs;
@@ -8,6 +12,8 @@ import com.peakform.trainings.exerciselogs.repository.ExerciseLogsRepository;
 import com.peakform.trainings.exercises.model.Exercises;
 import com.peakform.trainings.exercises.repository.ExercisesRepository;
 import com.peakform.trainings.trainingsessions.dto.ActiveSessionDto;
+import com.peakform.trainings.trainingsessions.dto.AllTrainingSessionsDto;
+import com.peakform.trainings.trainingsessions.dto.SpecificSessionWithLogsDto;
 import com.peakform.trainings.trainingsessions.dto.BulkExerciseLogDto;
 import com.peakform.trainings.trainingsessions.dto.BulkLogRequestDto;
 import com.peakform.trainings.trainingsessions.dto.BulkSetDto;
@@ -15,17 +21,31 @@ import com.peakform.trainings.trainingsessions.dto.PlanExerciseDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingDayDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingDaySpecificationDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingSessionDto;
+import com.peakform.trainings.trainingsessions.dto.UpdateLogDto;
+import com.peakform.trainings.trainingsessions.dto.UpdateSessionRequestDto;
+import com.peakform.trainings.trainingsessions.mapper.AllTrainingSessionMapper;
 import com.peakform.trainings.trainingsessions.mapper.TrainingSessionMapper;
 import com.peakform.trainings.trainingsessions.model.TrainingSessions;
 import com.peakform.trainings.trainingsessions.repository.TrainingSessionsRepository;
+import com.peakform.trainings.trainingsessions.repository.TrainingSessionsSpecification;
 import com.peakform.trainings.workoutplanexercises.model.WorkoutPlanExercises;
 import com.peakform.trainings.workoutplanexercises.repository.WorkoutPlanExerciseRepository;
 import com.peakform.trainings.workoutplans.model.WorkoutPlans;
 import com.peakform.trainings.workoutplans.repository.WorkoutPlansRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -44,7 +64,9 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
     private final ExercisesRepository exercisesRepository;
     private final WorkoutPlansRepository workoutPlansRepository;
     private final TrainingSessionMapper trainingMapper;
+    private final AllTrainingSessionMapper allTrainingSessionMapper;
     private final WorkoutPlanExerciseRepository planExercisesRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<TrainingDaySpecificationDto> getActivePlanDays(User user) {
@@ -171,7 +193,9 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
         }
 
         session.setEndTime(LocalDateTime.now());
-        sessionsRepository.save(session);
+
+        updateSessionDuration(session);
+
         TrainingSessions updatedSession = sessionsRepository.save(session);
 
         return trainingMapper.toTrainingSessionDto(updatedSession);
@@ -205,7 +229,7 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
     }
 
     @Transactional
-    public TrainingSessionDto logPastWorkout(BulkLogRequestDto request, User user) {
+    public TrainingSessionDto  logPastWorkout(BulkLogRequestDto request, User user) {
         WorkoutPlans plan = workoutPlansRepository.findById(request.getPlanId())
                 .orElseThrow(() -> new RuntimeException("Plan not found"));
 
@@ -219,7 +243,7 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
         session.setDayIdentifier(request.getDayIdentifier());
         session.setNotes(request.getNotes());
 
-        LocalDateTime workoutDateTime = request.getWorkoutDate().atStartOfDay();
+        LocalDateTime workoutDateTime = request.getWorkoutDate();
         session.setStartTime(workoutDateTime);
         session.setEndTime(workoutDateTime);
 
@@ -251,6 +275,7 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
             }
         }
 
+        updateSessionDuration(session);
         logsRepository.saveAll(allLogs);
         savedSession.setLogs(allLogs);
 
@@ -266,5 +291,99 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
                 .planName(session.getWorkoutPlans().getName())
                 .dayIdentifier(session.getDayIdentifier())
                 .build());
+    }
+
+    @Transactional(readOnly = true)
+    public SpecificSessionWithLogsDto getLastSessionWithLogs(User currentUser) {
+        TrainingSessions lastSession = sessionsRepository.findFirstByUserAndEndTimeIsNotNullOrderByEndTimeDesc(currentUser)
+                .orElseThrow(() -> new EntityNotFoundException("No treaning session found for user"));
+
+        return trainingMapper.toSpecificSessionWithLogsDto(lastSession);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SpecificSessionWithLogsDto getSpecificSessionForUser(User currentUser, Long sessionId) {
+        TrainingSessions specificSession = sessionsRepository.findByIdAndUser(sessionId, currentUser)
+                .orElseThrow(() -> new EntityNotFoundException("No treaning session found for user"));
+
+
+        return trainingMapper.toSpecificSessionWithLogsDto(specificSession);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<AllTrainingSessionsDto> getAllTrainingSessions(
+            User currentUser,
+            String searchParameter,
+            Pageable pageable) {
+
+        Specification<TrainingSessions> sessionWithSpec = TrainingSessionsSpecification.isOwnedAndCompleted(currentUser);
+        sessionWithSpec = sessionWithSpec.and(TrainingSessionsSpecification.hasSearchParameter(searchParameter));
+
+        Page<TrainingSessions> sessionPage = sessionsRepository.findAll(sessionWithSpec, pageable);
+
+        Page<AllTrainingSessionsDto> dtoPage = sessionPage.map(allTrainingSessionMapper::toAllTrainingSessionsDto);
+
+        return PagedResponse.of(dtoPage);
+    }
+
+    @Override
+    @Transactional
+    public SpecificSessionWithLogsDto updateTrainingSession(
+            UserDetails userDetails,
+            Long sessionId,
+            UpdateSessionRequestDto updateDto) {
+        User currentUser = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        TrainingSessions session = sessionsRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session with id " + sessionId + " not found"));
+
+        if (!session.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("You do not own this session");
+        }
+
+        if (updateDto.getNotes() != null) { session.setNotes(updateDto.getNotes()); }
+
+        if (updateDto.getLogsToUpdate() != null && !updateDto.getLogsToUpdate().isEmpty()) {
+
+
+            Map<Long, ExerciseLogs> existingLogsMap = session.getLogs().stream()
+                    .collect(Collectors.toMap(ExerciseLogs::getId, log -> log));
+            for (UpdateLogDto logUpdate : updateDto.getLogsToUpdate()) {
+
+                ExerciseLogs logEntity = existingLogsMap.get(logUpdate.getLogId());
+
+                if (logEntity == null) {
+
+                    throw new BadRequestException("Invalid log ID: " + logUpdate.getLogId() + ". It does not belong to session " + sessionId);
+                }
+                if (logUpdate.getReps() != null) {
+                    logEntity.setReps(logUpdate.getReps());
+                }
+                if (logUpdate.getWeight() != null) {
+                    logEntity.setWeight(logUpdate.getWeight());
+                }
+                if (logUpdate.getDurationMinutes() != null) {
+                    logEntity.setDurationMinutes(logUpdate.getDurationMinutes());
+                }
+                if (logUpdate.getDistanceKm() != null) {
+                    logEntity.setDistanceKm(logUpdate.getDistanceKm());
+                }
+            }
+        }
+
+        return trainingMapper.toSpecificSessionWithLogsDto(session);
+    }
+
+    private void updateSessionDuration(TrainingSessions session) {
+        LocalDateTime startTime = session.getStartTime();
+        LocalDateTime endTime = session.getEndTime();
+
+        if (startTime != null && endTime != null) {
+            long durationInSeconds = Duration.between(startTime, endTime).toSeconds();
+            session.setDuration(Math.max(0, durationInSeconds));
+        }
     }
 }

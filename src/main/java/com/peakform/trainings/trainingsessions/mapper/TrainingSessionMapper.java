@@ -2,6 +2,7 @@ package com.peakform.trainings.trainingsessions.mapper;
 
 import com.peakform.trainings.exerciselogs.dto.ExerciseLogDto;
 import com.peakform.trainings.exerciselogs.model.ExerciseLogs;
+import com.peakform.trainings.trainingsessions.dto.SpecificSessionWithLogsDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingSessionDto;
 import com.peakform.trainings.trainingsessions.model.TrainingSessions;
 import org.mapstruct.Mapper;
@@ -23,5 +24,10 @@ public interface TrainingSessionMapper {
     @Mapping(source = "logs", target = "logs")
     TrainingSessionDto toTrainingSessionDto(TrainingSessions session);
 
-    List<TrainingSessionDto> toTrainingSessionDtoList(List<TrainingSessions> sessions);
+
+    @Mapping(source = "id", target = "sessionId")
+    @Mapping(source = "workoutPlans.name", target = "planName")
+    @Mapping(source = "logs", target = "excerciseLogsList")
+    SpecificSessionWithLogsDto toSpecificSessionWithLogsDto(TrainingSessions session);
+
 }

@@ -1,23 +1,32 @@
 package com.peakform.trainings.trainingsessions.controller;
 
+import com.peakform.pages.PagedResponse;
 import com.peakform.trainings.exerciselogs.dto.ExerciseLogDto;
 import com.peakform.trainings.exerciselogs.dto.ExerciseLogRequestDto;
 import com.peakform.trainings.trainingsessions.dto.ActiveSessionDto;
+import com.peakform.trainings.trainingsessions.dto.AllTrainingSessionsDto;
+import com.peakform.trainings.trainingsessions.dto.SpecificSessionWithLogsDto;
 import com.peakform.trainings.trainingsessions.dto.BulkLogRequestDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingDayDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingDaySpecificationDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingSessionDto;
+import com.peakform.trainings.trainingsessions.dto.UpdateSessionRequestDto;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -56,4 +65,33 @@ public interface TrainingSessionsController {
     @GetMapping("/sessions/active")
     ResponseEntity<ActiveSessionDto> getActiveSession(
             @AuthenticationPrincipal UserDetails userDetails);
+
+    @GetMapping("/sessions/LastWithLogs")
+    ResponseEntity<SpecificSessionWithLogsDto> getLastSessionWithLogs(
+            @AuthenticationPrincipal UserDetails userDetails
+    );
+
+    @GetMapping("/sessions/specificSessionForUser/{sessionId}")
+    ResponseEntity<SpecificSessionWithLogsDto> getSpecificSessionForUser(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long sessionId
+    );
+
+    @GetMapping("/sessions/allSessions")
+    ResponseEntity<PagedResponse<AllTrainingSessionsDto>> getAllTrainingSessions(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false, name = "searchParameter") String searchParameter,
+            @PageableDefault(
+                    page = 0,
+                    size = 20,
+                    sort = "endTime"
+            ) Pageable pageable
+    );
+
+    @PatchMapping("/sessions/{sessionId}")
+    ResponseEntity<SpecificSessionWithLogsDto> updateTrainingSession(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestBody @Valid UpdateSessionRequestDto updateDto
+    );
 }
