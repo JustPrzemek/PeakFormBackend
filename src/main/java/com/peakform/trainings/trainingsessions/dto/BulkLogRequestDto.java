@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -15,7 +15,7 @@ public class BulkLogRequestDto {
     @NotBlank
     private String dayIdentifier;
     @NotNull
-    private LocalDate workoutDate; // Data, kiedy trening się odbył
+    private LocalDateTime workoutDate; // Data, kiedy trening się odbył
     private String notes;
     @NotEmpty
     private List<BulkExerciseLogDto> exercises;

@@ -1,16 +1,21 @@
 package com.peakform.trainings.trainingsessions.controller;
 
+import com.peakform.pages.PagedResponse;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
 import com.peakform.trainings.exerciselogs.dto.ExerciseLogDto;
 import com.peakform.trainings.exerciselogs.dto.ExerciseLogRequestDto;
 import com.peakform.trainings.trainingsessions.dto.ActiveSessionDto;
+import com.peakform.trainings.trainingsessions.dto.AllTrainingSessionsDto;
+import com.peakform.trainings.trainingsessions.dto.SpecificSessionWithLogsDto;
 import com.peakform.trainings.trainingsessions.dto.BulkLogRequestDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingDayDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingDaySpecificationDto;
 import com.peakform.trainings.trainingsessions.dto.TrainingSessionDto;
+import com.peakform.trainings.trainingsessions.dto.UpdateSessionRequestDto;
 import com.peakform.trainings.trainingsessions.service.TrainingSessionsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -91,5 +96,40 @@ public class TrainingSessionsControllerImpl implements TrainingSessionsControlle
         return trainingService.findActiveSession(currentUser)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.noContent().build());
+    }
+
+    @Override
+    public ResponseEntity<SpecificSessionWithLogsDto> getLastSessionWithLogs(UserDetails userDetails) {
+        User currentUser = getCurrentUser(userDetails);
+        return ResponseEntity.ok(trainingService.getLastSessionWithLogs(currentUser));
+    }
+
+    @Override
+    public ResponseEntity<SpecificSessionWithLogsDto> getSpecificSessionForUser(UserDetails userDetails, Long sessionId) {
+        User currentUser = getCurrentUser(userDetails);
+        return ResponseEntity.ok(trainingService.getSpecificSessionForUser(currentUser, sessionId));
+    }
+
+    @Override
+    public ResponseEntity<PagedResponse<AllTrainingSessionsDto>> getAllTrainingSessions(
+            UserDetails userDetails,
+            String searchParameter,
+            Pageable pageable) {
+        User currentUser = getCurrentUser(userDetails);
+        return ResponseEntity.ok(trainingService.getAllTrainingSessions(currentUser, searchParameter, pageable));
+    }
+
+    @Override
+    public ResponseEntity<SpecificSessionWithLogsDto> updateTrainingSession(
+            UserDetails userDetails,
+            Long sessionId,
+            UpdateSessionRequestDto updateDto) {
+
+        SpecificSessionWithLogsDto updatedSessionDto = trainingService.updateTrainingSession(
+                userDetails,
+                sessionId,
+                updateDto
+        );
+        return ResponseEntity.ok(updatedSessionDto);
     }
 }

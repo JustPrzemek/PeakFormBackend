@@ -4,7 +4,6 @@ import com.peakform.claudinary.service.AvatarService;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.model.UserPrincipal;
 import com.peakform.security.user.repository.UserRepository;
-import com.peakform.security.user.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -23,7 +22,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final AvatarService avatarService;
 
     @Override
-    @Transactional // Dodaj adnotację @Transactional
+    @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
@@ -44,7 +43,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 // Aktualizujemy jego dane o dostawcę OAuth2.
                 user.setAuthProvider(provider);
                 user.setProviderId(oAuth2User.getName());
-                user.setProfileImageUrl(oAuth2User.getAttribute("picture")); // opcjonalna aktualizacja zdjęcia
+                user.setProfileImageUrl(oAuth2User.getAttribute("picture"));
             }
             // Jeśli użytkownik już istnieje i logował się wcześniej przez Google,
             // to po prostu go zwracamy, nie ma potrzeby nic zmieniać.
@@ -59,7 +58,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user.setEnabled(true);
             user.setEmailVerified(true); // Email z Google jest z definicji zweryfikowany
 
-            // **POPRAWIONA, BEZPIECZNA LOGIKA GENEROWANIA NAZWY UŻYTKOWNIKA**
             String baseUsername = oAuth2User.getAttribute("name");
             if (baseUsername == null || baseUsername.isBlank()) {
                 baseUsername = email.split("@")[0];

@@ -4,6 +4,8 @@ import lombok.Data;
 
 @Data
 public class BulkSetDto {
-    private int reps;
-    private float weight;
+    private Integer reps;
+    private Float weight;
+    private Integer durationMinutes;
+    private Float distanceKm;
 }

@@ -36,15 +36,21 @@ public class ExerciseLogs {
     @JoinColumn(name = "exercise_id", nullable = false)
     private Exercises exercises;
 
-    @Column(name = "set_number", nullable = false)
+    @Column(name = "set_number")
     private Integer setNumber;
 
-    @Column(name = "reps", nullable = false)
+    @Column(name = "reps")
     private Integer reps;
 
-    @Column(name = "weight", nullable = false)
+    @Column(name = "weight")
     private Float weight;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Column(name = "distance_km")
+    private Float distanceKm;
 }

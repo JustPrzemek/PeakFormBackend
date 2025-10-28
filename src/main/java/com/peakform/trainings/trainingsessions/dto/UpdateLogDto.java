@@ -1,13 +1,14 @@
-package com.peakform.trainings.exerciselogs.dto;
+package com.peakform.trainings.trainingsessions.dto;
 
 import lombok.Data;
 
 @Data
-public class ExerciseLogRequestDto {
-    private Long exerciseId;
-    private Integer setNumber;
+public class UpdateLogDto {
+    private Long logId;
+    private String notes;
     private Integer reps;
     private Float weight;
     private Integer durationMinutes;
     private Float distanceKm;
+
 }

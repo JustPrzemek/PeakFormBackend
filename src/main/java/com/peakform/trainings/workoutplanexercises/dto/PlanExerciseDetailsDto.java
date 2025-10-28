@@ -9,6 +9,9 @@ public class PlanExerciseDetailsDto {
     private Long exerciseId;
     private String name;
     private String muscleGroup;
-    private int sets;
-    private int reps;
+    private String exerciseType;
+    private Integer sets;
+    private Integer reps;
+    private Integer durationMinutes;
+    private Float distanceKm;
 }

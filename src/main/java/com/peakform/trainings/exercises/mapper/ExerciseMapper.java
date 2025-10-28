@@ -16,7 +16,8 @@ public class ExerciseMapper {
                 exercise.getId(),
                 exercise.getName(),
                 exercise.getMuscleGroup(),
-                exercise.getDifficulty().name()
+                exercise.getDifficulty().name(),
+                exercise.getType()
         );
     }
 

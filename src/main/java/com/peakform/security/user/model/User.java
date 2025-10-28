@@ -145,5 +145,6 @@ public class User {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "active_workout_plan_id")
+    @ToString.Exclude
     private WorkoutPlans activeWorkoutPlan;
 }

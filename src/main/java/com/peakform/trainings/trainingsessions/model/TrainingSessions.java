@@ -55,4 +55,7 @@ public class TrainingSessions {
 
     @Column(name = "day_identifier", nullable = false)
     private String dayIdentifier;
+
+    @Column(name = "duration")
+    private Long duration;
 }
