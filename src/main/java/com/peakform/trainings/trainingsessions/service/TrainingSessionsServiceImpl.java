@@ -243,9 +243,8 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
         session.setDayIdentifier(request.getDayIdentifier());
         session.setNotes(request.getNotes());
 
-        LocalDateTime workoutDateTime = request.getWorkoutDate();
-        session.setStartTime(workoutDateTime);
-        session.setEndTime(workoutDateTime);
+        session.setStartTime(request.getWorkoutDateStart());
+        session.setEndTime(request.getWorkoutDateEnd());
 
         TrainingSessions savedSession = sessionsRepository.save(session);
 
@@ -260,7 +259,7 @@ public class TrainingSessionsServiceImpl implements TrainingSessionsService {
                 ExerciseLogs log = new ExerciseLogs();
                 log.setTrainingSessions(savedSession);
                 log.setExercises(exercise);
-                log.setCreatedAt(workoutDateTime);
+                log.setCreatedAt(request.getWorkoutDateStart());
 
                 if ("STRENGTH".equalsIgnoreCase(exercise.getType())) {
                     log.setSetNumber(setCounter++);

@@ -31,7 +31,8 @@ public class ExerciseMapper {
                 exercise.getMuscleGroup(),
                 exercise.getDifficulty().name(),
                 exercise.getDescription(),
-                exercise.getVideoUrl()
+                exercise.getVideoUrl(),
+                exercise.getType()
         );
     }
 }

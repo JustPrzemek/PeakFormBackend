@@ -147,4 +147,10 @@ public class User {
     @JoinColumn(name = "active_workout_plan_id")
     @ToString.Exclude
     private WorkoutPlans activeWorkoutPlan;
+
+    @Column(name = "generation_attempts_today")
+    private Integer generationAttemptsToday;
+
+    @Column(name = "last_generation_attempt_date")
+    private LocalDate lastGenerationAttemptDate;
 }
