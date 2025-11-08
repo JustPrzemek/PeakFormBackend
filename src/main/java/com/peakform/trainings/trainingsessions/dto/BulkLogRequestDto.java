@@ -15,7 +15,9 @@ public class BulkLogRequestDto {
     @NotBlank
     private String dayIdentifier;
     @NotNull
-    private LocalDateTime workoutDate; // Data, kiedy trening się odbył
+    private LocalDateTime workoutDateStart;
+    @NotNull
+    private LocalDateTime workoutDateEnd;
     private String notes;
     @NotEmpty
     private List<BulkExerciseLogDto> exercises;

@@ -12,4 +12,5 @@ public class WorkoutPlanDetailDto {
     private String description;
     private Map<String, List<ExerciseInPlanDto>> days;
     private boolean isActive;
+    private String goal;
 }

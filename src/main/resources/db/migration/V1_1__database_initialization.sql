@@ -25,7 +25,9 @@ CREATE TABLE users (
                        last_password_reset_request TIMESTAMP,
                        reset_attempts_today INT,
                        reset_attempts_date DATE,
-                       active_workout_plan_id BIGINT
+                       active_workout_plan_id BIGINT,
+                       generation_attempts_today INT DEFAULT 0,
+                       last_generation_attempt_date DATE
 
 );
 
@@ -66,6 +68,7 @@ CREATE TABLE workout_plans (
                                name VARCHAR(255) NOT NULL,
                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                description TEXT,
+                               goal VARCHAR(50) CHECK (goal IN ('reduction', 'bulk', 'maintenance')),
                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -150,13 +153,6 @@ CREATE TABLE followers (
                            UNIQUE (follower_id, followed_id),
                            FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
                            FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE weight_entries (
-                                id SERIAL PRIMARY KEY,
-                                user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                                weight FLOAT NOT NULL CHECK (weight > 0),
-                                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE users

@@ -9,6 +9,9 @@ import com.peakform.trainings.workoutplans.dto.UpdateExerciseInPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanDetailDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanSummaryDto;
+import com.peakform.trainings.workoutplans.dto.WorkoutPlanUpdateDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -19,7 +22,7 @@ public interface WorkoutPlanService {
 
     WorkoutPlanDetailDto addExerciseToPlan(Long planId, AddExerciseToPlanRequestDto requestDto);
 
-    List<WorkoutPlanSummaryDto> getUserPlans();
+    Page<WorkoutPlanSummaryDto> getUserPlans(String name, String goal, Boolean isActive, Pageable pageable);
 
     WorkoutPlanDetailDto getPlanDetails(Long planId);
 
@@ -31,4 +34,7 @@ public interface WorkoutPlanService {
 
     List<PlanExerciseDetailsDto> getExercisesForPlanDay(Long planId, String dayIdentifier);
 
+    WorkoutPlanDetailDto updatePlanDetails(Long planId, WorkoutPlanUpdateDto dto);
+
+    WorkoutPlanDetailDto generateBasicPlan();
 }

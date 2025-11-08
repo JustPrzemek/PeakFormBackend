@@ -8,9 +8,15 @@ import com.peakform.trainings.workoutplans.dto.UpdateExerciseInPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanDetailDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanSummaryDto;
+import com.peakform.trainings.workoutplans.dto.WorkoutPlanUpdateDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -30,12 +37,21 @@ public interface WorkoutPlanController {
     @Operation(summary = "Generuje nowy plan treningowy dla użytkownika")
     ResponseEntity<WorkoutPlanDetailDto> generatePlan(@RequestBody PlanGenerationRequestDto requestDto);
 
+    @PostMapping("/generateBasic")
+    @Operation(summary = "Generuje nowy basic plan treningowy dla użytkownika")
+    ResponseEntity<WorkoutPlanDetailDto> generateBasicPlan();
+
     @PostMapping
     ResponseEntity<WorkoutPlanDetailDto> createEmptyPlan(@RequestBody @Valid CreateWorkoutPlanRequestDto requestDto);
 
     @GetMapping
-    @Operation(summary = "Pobiera listę planów zalogowanego użytkownika")
-    ResponseEntity<List<WorkoutPlanSummaryDto>> getUserPlans();
+    @Operation(summary = "Pobiera listę planów zalogowanego użytkownika z filtrowaniem i sortowaniem z paginacja")
+    ResponseEntity<Page<WorkoutPlanSummaryDto>> getUserPlans(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String goal,
+            @RequestParam(required = false) Boolean isActive,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    );
 
     @GetMapping("/{planId}")
     @Operation(summary = "Pobiera szczegóły konkretnego planu")
@@ -64,4 +80,10 @@ public interface WorkoutPlanController {
     ResponseEntity<List<PlanExerciseDetailsDto>> getExercisesForPlanDay(
             @PathVariable Long planId,
             @PathVariable String dayIdentifier);
+
+    @PutMapping("/updateDetails/{planId}")
+    @Operation(summary = "Aktualizuje szczegóły planu treningowego")
+    ResponseEntity<WorkoutPlanDetailDto> updatePlanDetails(
+            @PathVariable Long planId,
+            @Valid @RequestBody WorkoutPlanUpdateDto updateDto);
 }

@@ -9,8 +9,11 @@ import com.peakform.trainings.workoutplans.dto.UpdateExerciseInPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanDetailDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanRequestDto;
 import com.peakform.trainings.workoutplans.dto.WorkoutPlanSummaryDto;
+import com.peakform.trainings.workoutplans.dto.WorkoutPlanUpdateDto;
 import com.peakform.trainings.workoutplans.service.WorkoutPlanService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,14 +34,20 @@ public class WorkoutPlanControllerImpl implements WorkoutPlanController {
     }
 
     @Override
+    public ResponseEntity<WorkoutPlanDetailDto> generateBasicPlan() {
+        WorkoutPlanDetailDto generatedBasicPlan = workoutPlanService.generateBasicPlan();
+        return new ResponseEntity<>(generatedBasicPlan, HttpStatus.CREATED);
+    }
+
+    @Override
     public ResponseEntity<WorkoutPlanDetailDto> createEmptyPlan(CreateWorkoutPlanRequestDto requestDto) {
         WorkoutPlanDetailDto createdPlan = workoutPlanService.createEmptyPlan(requestDto);
         return new ResponseEntity<>(createdPlan, HttpStatus.CREATED);
     }
 
     @Override
-    public ResponseEntity<List<WorkoutPlanSummaryDto>> getUserPlans() {
-        List<WorkoutPlanSummaryDto> plans = workoutPlanService.getUserPlans();
+    public ResponseEntity<Page<WorkoutPlanSummaryDto>> getUserPlans(String name, String goal, Boolean isActive, Pageable pageable) {
+        Page<WorkoutPlanSummaryDto> plans = workoutPlanService.getUserPlans(name, goal, isActive, pageable);
         return ResponseEntity.ok(plans);
     }
 
@@ -83,5 +92,14 @@ public class WorkoutPlanControllerImpl implements WorkoutPlanController {
             String dayIdentifier) {
         List<PlanExerciseDetailsDto> exercises = workoutPlanService.getExercisesForPlanDay(planId, dayIdentifier);
         return ResponseEntity.ok(exercises);
+    }
+
+    @Override
+    public ResponseEntity<WorkoutPlanDetailDto> updatePlanDetails(
+            Long planId,
+            WorkoutPlanUpdateDto updateDto) {
+
+        WorkoutPlanDetailDto updatedPlan = workoutPlanService.updatePlanDetails(planId, updateDto);
+        return ResponseEntity.ok(updatedPlan);
     }
 }

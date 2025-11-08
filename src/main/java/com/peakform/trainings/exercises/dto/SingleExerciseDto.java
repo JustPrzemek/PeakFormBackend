@@ -12,4 +12,5 @@ public class SingleExerciseDto {
     private String difficulty;
     private String description;
     private String videoUrl;
+    private String type;
 }

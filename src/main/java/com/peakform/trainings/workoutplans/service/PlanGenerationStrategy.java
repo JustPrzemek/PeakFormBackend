@@ -6,5 +6,5 @@ import com.peakform.trainings.workoutplans.model.WorkoutPlans;
 
 public interface PlanGenerationStrategy {
     WorkoutPlans generatePlan(User user, PlanGenerationRequestDto request);
-    boolean supports(PlanGenerationRequestDto request);
+//    boolean supports(PlanGenerationRequestDto request);
 }

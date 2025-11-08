@@ -7,4 +7,5 @@ public class CreateWorkoutPlanRequestDto {
     private String name;
     private String description;
     private boolean setActive = false;
+    private String goal;
 }
