@@ -34,6 +34,12 @@ public class WorkoutPlanControllerImpl implements WorkoutPlanController {
     }
 
     @Override
+    public ResponseEntity<WorkoutPlanDetailDto> generateBasicPlan() {
+        WorkoutPlanDetailDto generatedBasicPlan = workoutPlanService.generateBasicPlan();
+        return new ResponseEntity<>(generatedBasicPlan, HttpStatus.CREATED);
+    }
+
+    @Override
     public ResponseEntity<WorkoutPlanDetailDto> createEmptyPlan(CreateWorkoutPlanRequestDto requestDto) {
         WorkoutPlanDetailDto createdPlan = workoutPlanService.createEmptyPlan(requestDto);
         return new ResponseEntity<>(createdPlan, HttpStatus.CREATED);

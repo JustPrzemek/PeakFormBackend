@@ -34,8 +34,8 @@ public class WorkoutPlans {
     private User user;
 
     @NotBlank(message = "Plan name is required")
-    @Size(max = 25, message = "The plan name cannot exceed 25 characters.")
-    @Column(name = "name", nullable = false, length = 25)
+    @Size(max = 50, message = "The plan name cannot exceed 50 characters.")
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
 
     @Column(name = "created_at")

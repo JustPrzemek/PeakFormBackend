@@ -36,4 +36,5 @@ public interface WorkoutPlanService {
 
     WorkoutPlanDetailDto updatePlanDetails(Long planId, WorkoutPlanUpdateDto dto);
 
+    WorkoutPlanDetailDto generateBasicPlan();
 }

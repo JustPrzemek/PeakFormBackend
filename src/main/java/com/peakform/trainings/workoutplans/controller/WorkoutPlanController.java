@@ -37,6 +37,10 @@ public interface WorkoutPlanController {
     @Operation(summary = "Generuje nowy plan treningowy dla użytkownika")
     ResponseEntity<WorkoutPlanDetailDto> generatePlan(@RequestBody PlanGenerationRequestDto requestDto);
 
+    @PostMapping("/generateBasic")
+    @Operation(summary = "Generuje nowy basic plan treningowy dla użytkownika")
+    ResponseEntity<WorkoutPlanDetailDto> generateBasicPlan();
+
     @PostMapping
     ResponseEntity<WorkoutPlanDetailDto> createEmptyPlan(@RequestBody @Valid CreateWorkoutPlanRequestDto requestDto);
 

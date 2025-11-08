@@ -44,33 +44,27 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
     private final WorkoutPlansRepository workoutPlanRepository;
     private final WorkoutPlanExerciseRepository workoutPlanExerciseRepository;
     private final ExercisesRepository exercisesRepository;
-    private final List<PlanGenerationStrategy> generationStrategies;
+//    private final List<PlanGenerationStrategy> generationStrategies;
+    private final BasicStrategy basicStrategy;
     private final WorkoutPlanExerciseRepository planExercisesRepository;
     private final AiGenerationService aiGenerationService;
 
     private static final int MAX_GENERATIONS_PER_DAY = 2;
 
-//    @Override
-//    @Transactional
-//    public WorkoutPlanDetailDto generatePlan(PlanGenerationRequestDto requestDto) {
-//        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-//        User user = userRepository.findByUsername(username)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-//
-//        PlanGenerationStrategy strategy = generationStrategies.stream()
-//                .filter(s -> s.supports(requestDto))
-//                .findFirst()
-//                .orElseThrow(() -> new IllegalArgumentException("Nie znaleziono strategii dla podanych parametrów."));
-//
-//        WorkoutPlans newPlan = strategy.generatePlan(user, requestDto);
-//
-//        if (requestDto.isSetActive()) {
-//            user.setActiveWorkoutPlan(newPlan);
-//            userRepository.save(user);
-//        }
-//
-//        return getPlanDetails(newPlan.getId());
-//    }
+    @Override
+    @Transactional
+    public WorkoutPlanDetailDto generateBasicPlan() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        WorkoutPlans newPlan = basicStrategy.generatePlan(user);
+
+        user.setActiveWorkoutPlan(newPlan);
+        userRepository.save(user);
+
+        return getPlanDetails(newPlan.getId());
+    }
 
     @Override
     @Transactional
@@ -79,7 +73,6 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // ----- POCZĄTEK LOGIKI LIMITU -----
 
         LocalDate today = LocalDate.now();
         int attemptsToday = user.getGenerationAttemptsToday() != null ? user.getGenerationAttemptsToday() : 0;
@@ -88,12 +81,10 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         if (lastAttemptDate != null && lastAttemptDate.isEqual(today)) {
             // Użytkownik już dziś generował. Sprawdzamy limit.
             if (attemptsToday >= MAX_GENERATIONS_PER_DAY) {
-                // Osiągnął limit, rzucamy błąd
                 throw new IllegalStateException(
                         "Przekroczono limit " + MAX_GENERATIONS_PER_DAY + " generacji planu na dziś. Spróbuj ponownie jutro."
                 );
             }
-            // Jest dzisiaj, ale limit nieosiągnięty. Inkrementujemy.
             user.setGenerationAttemptsToday(attemptsToday + 1);
         } else {
             // Pierwsza generacja dzisiaj (lub pierwsza w ogóle). Resetujemy licznik.
@@ -103,17 +94,14 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
 
         // Zapisujemy zaktualizowany stan licznika w bazie
         // Robimy to PRZED wywołaniem AI, aby nawet nieudana próba się liczyła.
+        // moze to zmeinie ale narazie tak jest i tam ma zostac nie wiem
         userRepository.save(user);
 
-        // ----- KONIEC LOGIKI LIMITU -----
-
-
-        // UŻYJ NOWEGO SERWISU AI (ten kod już masz)
         WorkoutPlans newPlan = aiGenerationService.generatePlan(user, requestDto);
 
         if (requestDto.isSetActive()) {
             user.setActiveWorkoutPlan(newPlan);
-            userRepository.save(user); // Zapisujemy ponownie, aby ustawić aktywny plan
+            userRepository.save(user);
         }
 
         return getPlanDetails(newPlan.getId());
@@ -267,7 +255,8 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
         WorkoutPlanExercises exerciseInPlan = workoutPlanExerciseRepository.findById(workoutPlanExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Exercise in plan not found with id: " + workoutPlanExerciseId));
 
-        // Sprawdzenie, czy edytowane ćwiczenie na pewno należy do tego użytkownika (przez plan)
+        // Sprawdzenie, czy edytowane ćwiczenie na pewno należy do tego użytkownika (przez plan) zupdatowac pozniej te
+        // exceptiony wszedzie tutaj jest raczej ok
         if (!exerciseInPlan.getWorkoutPlans().getUser().getId().equals(user.getId())) {
             throw new SecurityException("Access denied to update this resource.");
         }
@@ -321,23 +310,16 @@ public class WorkoutPlanServiceImpl implements WorkoutPlanService {
     @Override
     @Transactional
     public WorkoutPlanDetailDto updatePlanDetails(Long planId, WorkoutPlanUpdateDto dto) {
-        // 1. Pobierz użytkownika
         User user = getCurrentUser();
 
-        // 2. Znajdź plan i sprawdź, czy należy do tego użytkownika
-        //    Ta metoda już rzuca wyjątek w razie problemu, więc jest idealna
         WorkoutPlans plan = findPlanByIdAndCheckOwnership(planId, user);
 
-        // 3. Zaktualizuj pola w encji
         plan.setName(dto.getName());
         plan.setDescription(dto.getDescription());
         plan.setGoal(dto.getGoal());
 
-        // 4. Zapisz zmiany w bazie
         workoutPlanRepository.save(plan);
 
-        // 5. Zwróć zaktualizowany pełny DTO, używając tej samej metody co reszta.
-        //    To jest wzorzec, który już stosujesz i jest on bardzo dobry.
         return getPlanDetails(planId);
     }
 
