@@ -2,6 +2,7 @@ package com.peakform.mailsender;
 
 import com.peakform.security.user.model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,12 @@ import org.springframework.stereotype.Service;
 public class MailService {
 
     private final JavaMailSender mailSender;
+
+    @Value("${verification.email.url}")
+    private String verificationUri;
+
+    @Value("${resetpassword.url}")
+    private String resetPasswordUri;
 
     public void sendMail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -22,7 +29,7 @@ public class MailService {
 
     public void sendVerificationEmail(User user) {
         String subject = "Verification Email";
-        String verificationUrl = "http://localhost:5173/email-confirmed?token=" + user.getEmailVerificationToken();
+        String verificationUrl = verificationUri + user.getEmailVerificationToken();
 
         String text = "Hiiii :D " + user.getUsername() + ",\n\n"
                 + "Click the link below to confirm your email address:\n"
@@ -34,7 +41,7 @@ public class MailService {
 
     public void sendPasswordResetEmail(User user, String rawToken) {
         String subject = "Password reset";
-        String resetUrl = "http://localhost:5173/reset-password?token=" + rawToken;
+        String resetUrl = resetPasswordUri + rawToken;
 
         String text = "Hiiii :D" + user.getUsername() + ",\n\n"
                 + "Click the link below to reset your password:\n"
