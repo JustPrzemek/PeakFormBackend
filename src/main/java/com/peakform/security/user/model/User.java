@@ -2,13 +2,18 @@ package com.peakform.security.user.model;
 
 import com.peakform.comments.model.Comments;
 import com.peakform.followers.model.Followers;
-import com.peakform.meals.model.Meal;
+import com.peakform.meals.dailyfoodlog.model.DailyFoodLog;
+import com.peakform.meals.recipe.model.Recipe;
+import com.peakform.meals.weightlog.model.WeightLog;
 import com.peakform.postlikes.model.PostLikes;
 import com.peakform.posts.model.Post;
+import com.peakform.trainings.enums.ActivityLevel;
 import com.peakform.trainings.workoutplans.model.WorkoutPlans;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -137,10 +142,6 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     @ToString.Exclude
-    private List<Meal> meals;
-
-    @OneToMany(mappedBy = "user")
-    @ToString.Exclude
     private List<PostLikes> likes;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -153,4 +154,20 @@ public class User {
 
     @Column(name = "last_generation_attempt_date")
     private LocalDate lastGenerationAttemptDate;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<WeightLog> weightLogs = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<DailyFoodLog> foodLogs = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Recipe> recipes = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "activity_level", nullable = false)
+    private ActivityLevel activityLevel = ActivityLevel.LIGHT;
 }
