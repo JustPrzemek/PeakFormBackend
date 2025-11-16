@@ -1,4 +1,4 @@
-package com.peakform.meals.model;
+package com.peakform.meals.weightlog.model;
 
 import com.peakform.security.user.model.User;
 import jakarta.persistence.Column;
@@ -10,19 +10,24 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
+@Table(name = "weight_log", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "date"})
+})
 @Data
-@Table(name = "meals")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Meal {
+public class WeightLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,25 +35,14 @@ public class Meal {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
     private User user;
 
-    @Column(nullable = false, length = 255)
-    private String name;
+    @NotNull
+    @Column(nullable = false)
+    private LocalDate date = LocalDate.now();
 
-    @CreationTimestamp
-    @Column(name = "date", updatable = false)
-    private LocalDateTime date;
-
-    @Column(columnDefinition = "FLOAT CHECK (calories >= 0)")
-    private Float calories;
-
-    @Column(columnDefinition = "FLOAT CHECK (protein >= 0)")
-    private Float protein;
-
-    @Column(columnDefinition = "FLOAT CHECK (carbs >= 0)")
-    private Float carbs;
-
-    @Column(columnDefinition = "FLOAT CHECK (fat >= 0)")
-    private Float fat;
-
+    @Positive(message = "Weight must be positive")
+    @Column(nullable = false)
+    private Float weight;
 }

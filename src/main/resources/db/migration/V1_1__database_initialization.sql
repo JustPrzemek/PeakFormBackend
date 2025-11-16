@@ -1,3 +1,4 @@
+
 CREATE TABLE users (
                        id SERIAL PRIMARY KEY,
                        email VARCHAR(255) UNIQUE NOT NULL,
@@ -27,8 +28,9 @@ CREATE TABLE users (
                        reset_attempts_date DATE,
                        active_workout_plan_id BIGINT,
                        generation_attempts_today INT DEFAULT 0,
-                       last_generation_attempt_date DATE
-
+                       last_generation_attempt_date DATE,
+                       activity_level VARCHAR(50) NOT NULL DEFAULT 'LIGHT'
+                           CHECK (activity_level IN ('SEDENTARY', 'LIGHT', 'MODERATE', 'ACTIVE', 'VERY_ACTIVE'))
 );
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -38,19 +40,6 @@ CREATE INDEX idx_users_username_trgm ON users
 
 CREATE UNIQUE INDEX idx_provider_id ON users (auth_provider, provider_id)
     WHERE auth_provider != 'local' AND provider_id IS NOT NULL;
-
-CREATE TABLE meals (
-                       id SERIAL PRIMARY KEY,
-                       user_id BIGINT NOT NULL,
-                       name VARCHAR(255) NOT NULL,
-                       date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       calories FLOAT CHECK (calories >= 0),
-                       protein FLOAT CHECK (protein >= 0),
-                       carbs FLOAT CHECK (carbs >= 0),
-                       fat FLOAT CHECK (fat >= 0),
-                       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 
 CREATE TABLE exercises (
                            id SERIAL PRIMARY KEY,
@@ -154,6 +143,95 @@ CREATE TABLE followers (
                            FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
                            FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE products (
+                          id SERIAL PRIMARY KEY,
+                          name VARCHAR(255) NOT NULL,
+                          barcode VARCHAR(100) UNIQUE,
+                          external_api_id VARCHAR(255),
+                          brand VARCHAR(255),
+                          user_id BIGINT,
+                          calories_per_100g FLOAT NOT NULL CHECK (calories_per_100g >= 0),
+                          protein_per_100g FLOAT NOT NULL CHECK (protein_per_100g >= 0),
+                          carbs_per_100g FLOAT NOT NULL CHECK (carbs_per_100g >= 0),
+                          fat_per_100g FLOAT NOT NULL CHECK (fat_per_100g >= 0),
+                          default_unit VARCHAR(20) NOT NULL DEFAULT 'g',
+
+                          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_products_name_trgm ON products
+    USING GIN (name gin_trgm_ops);
+CREATE INDEX idx_products_external_api_id ON products (external_api_id);
+
+
+CREATE TABLE recipes (
+                         id SERIAL PRIMARY KEY,
+                         user_id BIGINT NOT NULL,
+                         name VARCHAR(255) NOT NULL,
+                         description TEXT,
+                         servings FLOAT NOT NULL DEFAULT 1.0 CHECK (servings > 0),
+
+                         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE recipe_products (
+                                 id SERIAL PRIMARY KEY,
+                                 recipe_id BIGINT NOT NULL,
+                                 product_id BIGINT NOT NULL,
+                                 quantity FLOAT NOT NULL CHECK (quantity > 0),
+                                 unit VARCHAR(50) NOT NULL DEFAULT 'g',
+
+                                 FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+                                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE TYPE meal_type_enum AS ENUM ('BREAKFAST', 'LUNCH', 'DINNER', 'SNACK');
+
+
+CREATE TABLE daily_food_log (
+                                id SERIAL PRIMARY KEY,
+                                user_id BIGINT NOT NULL,
+                                date DATE NOT NULL DEFAULT CURRENT_DATE,
+                                meal_type meal_type_enum NOT NULL,
+
+                                product_id BIGINT,
+                                recipe_id BIGINT,
+
+                                quantity FLOAT NOT NULL CHECK (quantity > 0),
+                                unit VARCHAR(50) NOT NULL, -- 'g', 'ml', 'porcja'
+
+                                calories_eaten FLOAT NOT NULL CHECK (calories_eaten >= 0),
+                                protein_eaten FLOAT NOT NULL CHECK (protein_eaten >= 0),
+                                carbs_eaten FLOAT NOT NULL CHECK (carbs_eaten >= 0),
+                                fat_eaten FLOAT NOT NULL CHECK (fat_eaten >= 0),
+
+                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+                                FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE SET NULL,
+
+                                CONSTRAINT chk_log_entry_type CHECK (
+                                    (product_id IS NOT NULL AND recipe_id IS NULL) OR
+                                    (product_id IS NULL AND recipe_id IS NOT NULL)
+                                    )
+);
+
+CREATE INDEX idx_daily_food_log_user_date ON daily_food_log (user_id, date);
+
+
+CREATE TABLE weight_log (
+                            id SERIAL PRIMARY KEY,
+                            user_id BIGINT NOT NULL,
+                            date DATE NOT NULL DEFAULT CURRENT_DATE,
+                            weight FLOAT NOT NULL CHECK (weight > 0),
+
+                            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+                            UNIQUE(user_id, date)
+);
+
+CREATE INDEX idx_weight_log_user_date_desc ON weight_log (user_id, date DESC);
 
 ALTER TABLE users
     ADD CONSTRAINT fk_users_active_workout_plan
