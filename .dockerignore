@@ -8,8 +8,3 @@
 
 # Ignoruj folder build Mavena (jest tworzony wewnątrz kontenera)
 target/
-
-# Ignoruj pliki wrapper Mavena
-.mvn/
-mvnw
-mvnw.cmd
