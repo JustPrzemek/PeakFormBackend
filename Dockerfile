@@ -1,32 +1,37 @@
-# Użyj obrazu bazowego z JDK 17 (lub 21, jeśli używasz)
-FROM eclipse-temurin:21-jdk-jammy
+# --- Etap 1: Budowanie aplikacji (Builder) ---
+# Użyj oficjalnego obrazu dla Javy 21 (Maven do budowania)
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
-# Ustaw katalog roboczy w kontenerze
+# Ustaw katalog roboczy
 WORKDIR /app
 
-# Skopiuj pliki build (Maven wrapper)
+# Skopiuj pliki Mavena (wrapper i pom)
 COPY .mvn/ .mvn
-COPY mvnw .
-COPY pom.xml .
+COPY mvnw pom.xml ./
 
-# Pobierz zależności (dzięki temu warstwa będzie cache'owana)
+# Pobierz zależności (dzięki temu warstwa ta będzie cache'owana)
 RUN ./mvnw dependency:go-offline
 
-# Skopiuj resztę kodu źródłowego
+# Skopiuj kod źródłowy
 COPY src ./src
 
-# Zbuduj aplikację (tworząc plik JAR)
+# Zbuduj aplikację, pomijając testy (dobra praktyka w CI/CD)
 RUN ./mvnw clean package -DskipTests
 
-# Użyj lżejszego obrazu do uruchomienia
+
+# --- Etap 2: Obraz produkcyjny (Runner) ---
+# Użyj mniejszego obrazu JRE (Java Runtime Environment) dla Javy 21
 FROM eclipse-temurin:21-jre-jammy
+
 WORKDIR /app
 
-# Skopiuj plik JAR z poprzedniego etapu
-COPY --from=0 /app/target/*.jar app.jar
-
-# Ustaw port, na którym będzie działać aplikacja
+# Ustaw port, na którym Spring Boot domyślnie działa
+# Render i tak użyje zmiennej $PORT, ale to dobra praktyka
 EXPOSE 8080
 
-# Komenda uruchomieniowa
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Skopiuj zbudowany plik .jar z etapu "builder"
+COPY --from=builder /app/target/*.jar app.jar
+
+# Komenda startowa
+# Używamy portu podanego przez Render ($PORT)
+ENTRYPOINT ["java", "-jar", "-Dserver.port=${PORT}", "app.jar"]
