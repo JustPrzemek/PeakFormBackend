@@ -1,25 +1,32 @@
-# ----- ETAP 1: Budowanie Aplikacji (Builder) -----
-FROM maven:3.9-eclipse-temurin-21 AS build
+# Użyj obrazu bazowego z JDK 17 (lub 21, jeśli używasz)
+FROM eclipse-temurin:21-jdk-jammy
 
-# Ustawiamy katalog roboczy wewnątrz kontenera
+# Ustaw katalog roboczy w kontenerze
 WORKDIR /app
 
-# Kopiujemy cały projekt
-COPY . .
+# Skopiuj pliki build (Maven wrapper)
+COPY .mvn/ .mvn
+COPY mvnw .
+COPY pom.xml .
 
-# Budujemy aplikację Mavenem, pomijając testy
-# To stworzy plik /app/target/peakform-0.0.1-SNAPSHOT.jar
-RUN mvn clean package -DskipTests
+# Pobierz zależności (dzięki temu warstwa będzie cache'owana)
+RUN ./mvnw dependency:go-offline
 
-# ----- ETAP 2: Uruchomienie Aplikacji (Runner) -----
-# Używamy lekkiego obrazu Javy 21 (tylko środowisko uruchomieniowe)
-FROM eclipse-temurin:21-jre-alpine
+# Skopiuj resztę kodu źródłowego
+COPY src ./src
 
-# Ustawiamy katalog roboczy
+# Zbuduj aplikację (tworząc plik JAR)
+RUN ./mvnw clean package -DskipTests
+
+# Użyj lżejszego obrazu do uruchomienia
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Kopiujemy gotowy plik .jar z etapu "build"
-COPY --from=build /app/target/peakform-0.0.1-SNAPSHOT.jar .
+# Skopiuj plik JAR z poprzedniego etapu
+COPY --from=0 /app/target/*.jar app.jar
 
-# Komenda, która uruchomi Twoją aplikację
-ENTRYPOINT ["java", "-jar", "peakform-0.0.1-SNAPSHOT.jar"]
+# Ustaw port, na którym będzie działać aplikacja
+EXPOSE 8080
+
+# Komenda uruchomieniowa
+ENTRYPOINT ["java", "-jar", "app.jar"]
