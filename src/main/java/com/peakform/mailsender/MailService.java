@@ -19,8 +19,13 @@ public class MailService {
     @Value("${resetpassword.url}")
     private String resetPasswordUri;
 
+    @Value("${spring.mail.properties.mail.smtp.from}")
+    private String fromEmail;
+
     public void sendMail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
