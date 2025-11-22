@@ -4,7 +4,7 @@ import com.peakform.security.auth.util.JwtUtil;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.model.UserPrincipal;
 import com.peakform.security.user.repository.UserRepository;
-import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -45,9 +45,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         user.setRefreshToken(refreshToken);
         userRepository.save(user); // Zapisujemy tylko refresh token
 
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // true na produkcji!
+        cookie.setPath("/api/auth/refresh"); // Ważne: ścieżka musi pasować do endpointu refresh
+        cookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(cookie);
+
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshToken)
                 .build().toUriString();
 
         clearAuthenticationAttributes(request);

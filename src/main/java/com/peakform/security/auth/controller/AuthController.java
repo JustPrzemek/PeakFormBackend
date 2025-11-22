@@ -11,13 +11,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.Map;
 
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Authentication API")
@@ -53,13 +53,16 @@ public interface AuthController {
                     content = @Content(schema = @Schema(implementation = AuthResponse.class))),
             @ApiResponse(responseCode = "401", description = "Invalid refresh token")
     })
-    ResponseEntity<AuthResponse> refresh(@RequestBody Map<String, String> request);
+    ResponseEntity<AuthResponse> refresh(
+            // Zmiana: Nie bierzemy z @RequestBody, tylko z Ciasteczka!
+            @CookieValue(name = "refreshToken", required = false) String refreshToken
+    );
 
     @PostMapping("/logout")
     @Operation(
             summary = "Logout",
             description = "Delete token")
-    ResponseEntity<Void> logout(@RequestBody LogoutRequest request);
+    ResponseEntity<Void> logout(@RequestBody(required = false)  LogoutRequest request);
 
     @GetMapping("/verify")
     @Operation(
