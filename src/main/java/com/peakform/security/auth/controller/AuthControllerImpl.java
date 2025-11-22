@@ -6,6 +6,7 @@ import com.peakform.security.user.dto.LogoutRequest;
 import com.peakform.security.user.dto.RegisterRequest;
 import com.peakform.security.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -20,21 +21,26 @@ public class AuthControllerImpl implements AuthController {
 
     private final UserService userService;
 
+    @Value("${https.secure}")
+    private Boolean isSecure;
+
     private ResponseCookie createRefreshTokenCookie(String token) {
         return ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)    // JS tego nie widzi (ochrona przed XSS)
-                .secure(false)     // Zmień na TRUE, jeśli masz HTTPS (na produkcji obowiązkowo)
+                .secure(isSecure)     // Zmień na TRUE, jeśli masz HTTPS (na produkcji obowiązkowo)
                 .path("/api/auth/refresh") // Ciasteczko wysyłane TYLKO do endpointu odświeżania (i logout)
                 .maxAge(7 * 24 * 60 * 60) // 7 dni
-                .sameSite("Strict") // Ochrona CSRF
+                .sameSite("None") // Ochrona CSRF
                 .build();
     }
 
     private ResponseCookie deleteRefreshTokenCookie() {
         return ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
+                .secure(isSecure)
                 .path("/api/auth/refresh")
                 .maxAge(0)
+                .sameSite("None")
                 .build();
     }
 
