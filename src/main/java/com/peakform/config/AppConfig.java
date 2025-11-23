@@ -19,9 +19,10 @@ import java.util.concurrent.TimeUnit;
 public class AppConfig {
 
     private static final String OFF_BASE_URL = "https://world.openfoodfacts.org";
-    private static final int CONNECT_TIMEOUT_MS = 5000; // 5 sekund
-    private static final int READ_TIMEOUT_SEC = 10;     // 10 sekund
-    private static final int WRITE_TIMEOUT_SEC = 10;    // 10 sekund
+
+    private static final int CONNECT_TIMEOUT_MS = 10000; // 10 sekund na połączenie
+    private static final int READ_TIMEOUT_SEC = 45;      // 45 sekund na odpowiedź (OFF bywa wolne!)
+    private static final int WRITE_TIMEOUT_SEC = 30;     // 30 sekund na wysłanie
 
     @Bean
     public RestTemplate restTemplate() {
@@ -42,8 +43,7 @@ public class AppConfig {
         return WebClient.builder()
                 .baseUrl(OFF_BASE_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.USER_AGENT, "PeakForm - Backend - v1.0")
-
+                .defaultHeader(HttpHeaders.USER_AGENT, "PeakForm - Android/Web - v1.0 - https://peakform-app.netlify.app")
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
