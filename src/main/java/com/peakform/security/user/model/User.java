@@ -22,9 +22,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -47,28 +50,33 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Email(message = "Invalid email format")
     @Column(nullable = false, unique = true)
     private String email;
 
     @Column(name = "password_hash")
     private String passwordHash;
 
-    @Column(nullable = false, unique = true)
+    @Size(min = 3, max = 25, message = "Username must be between 3 and 25 characters")
+    @Column(nullable = false, unique = true, length = 25)
     private String username;
 
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
-    @Column(name = "profile_bio")
+    @Size(max = 500, message = "Bio cannot exceed 500 characters")
+    @Column(name = "profile_bio",  length = 500)
     private String profileBio;
 
-    @Column(name = "bio_title")
+    @Size(max = 60, message = "Bio title cannot exceed 60 characters")
+    @Column(name = "bio_title", length = 60)
     private String bioTitle;
 
-    @Column(name = "location")
+    @Size(max = 100, message = "Location cannot exceed 100 characters")
+    @Column(name = "location", length = 100)
     private String location;
 
-    @Pattern(regexp = "MALE|FEMALE")
+    @Pattern(regexp = "MALE|FEMALE", message = "Invalid gender")
     private String gender;
 
     @Past(message = "Birth date must be from the past.")
@@ -76,12 +84,14 @@ public class User {
     private LocalDate dateOfBirth;
 
     @Positive
+    @Max(value = 500, message = "Weight cannot exceed 500kg")
     private Float weight;
 
     @Positive
+    @Max(value = 500, message = "Height cannot exceed 500cm")
     private Float height;
 
-    @Pattern(regexp = "reduction|bulk|maintenance")
+    @Pattern(regexp = "reduction|bulk|maintenance", message = "Invalid goal")
     private String goal;
 
     @Column(name = "auth_provider")

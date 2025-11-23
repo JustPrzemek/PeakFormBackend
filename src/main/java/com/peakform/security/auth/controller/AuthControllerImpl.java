@@ -25,22 +25,24 @@ public class AuthControllerImpl implements AuthController {
     private Boolean isSecure;
 
     private ResponseCookie createRefreshTokenCookie(String token) {
+        String sameSite = isSecure ? "None" : "Lax";
         return ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)    // JS tego nie widzi (ochrona przed XSS)
                 .secure(isSecure)     // Zmień na TRUE, jeśli masz HTTPS (na produkcji obowiązkowo)
                 .path("/api/auth/refresh") // Ciasteczko wysyłane TYLKO do endpointu odświeżania (i logout)
                 .maxAge(7 * 24 * 60 * 60) // 7 dni
-                .sameSite("None") // Ochrona CSRF
+                .sameSite(sameSite) // Ochrona CSRF
                 .build();
     }
 
     private ResponseCookie deleteRefreshTokenCookie() {
+        String sameSite = isSecure ? "None" : "Lax";
         return ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(isSecure)
                 .path("/api/auth/refresh")
                 .maxAge(0)
-                .sameSite("None")
+                .sameSite(sameSite)
                 .build();
     }
 
@@ -65,17 +67,13 @@ public class AuthControllerImpl implements AuthController {
     public ResponseEntity<AuthResponse> refresh(
             String refreshToken
     ) {
+
         if (refreshToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // Musisz lekko dostosować userService.refresh, żeby przyjmował Stringa, a nie Mapę
-        // Albo spakuj go w mapę tutaj, jeśli nie chcesz ruszać serwisu:
         Map<String, String> tokenMap = Map.of("refreshToken", refreshToken);
-
         AuthResponse authResponse = userService.refresh(tokenMap);
-
-        // Przy odświeżaniu, warto odświeżyć też ciasteczko (rotacja tokenów)
         ResponseCookie cookie = createRefreshTokenCookie(authResponse.getRefreshToken());
 
         return ResponseEntity.ok()

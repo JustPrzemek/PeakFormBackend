@@ -1,5 +1,6 @@
 package com.peakform.userprofile.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,4 +20,7 @@ public class EditUserDataDTO {
     private Float weight;
     private Float height;
     private String goal;
+    private String newAccessToken;
+    @JsonIgnore
+    private String newRefreshToken;
 }

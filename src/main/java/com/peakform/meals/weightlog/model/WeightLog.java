@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -43,6 +44,7 @@ public class WeightLog {
     private LocalDate date = LocalDate.now();
 
     @Positive(message = "Weight must be positive")
+    @Max(value = 500, message = "Weight cannot exceed 500kg")
     @Column(nullable = false)
     private Float weight;
 }

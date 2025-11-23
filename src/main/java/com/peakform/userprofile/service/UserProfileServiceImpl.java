@@ -7,8 +7,10 @@ import com.peakform.exceptions.FollowNotFoundException;
 import com.peakform.exceptions.UserAlreadyExistException;
 import com.peakform.followers.model.Followers;
 import com.peakform.followers.repository.FollowersRepository;
+import com.peakform.security.auth.util.JwtUtil;
 import com.peakform.security.user.model.User;
 import com.peakform.security.user.repository.UserRepository;
+import com.peakform.security.user.service.CustomUserDetailService;
 import com.peakform.userprofile.dto.EditUserDataDTO;
 import com.peakform.userprofile.dto.UserProfileDTO;
 import com.peakform.userprofile.mapper.UserProfileMapper;
@@ -16,6 +18,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,6 +34,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserProfileMapper userProfileMapper;
     private final ImageUploadService imageUploadService;
     private final FollowersRepository followersRepository;
+    private final JwtUtil jwtUtil;
+    private final CustomUserDetailService customUserDetailService;
 
 
     @Override
@@ -52,16 +57,19 @@ public class UserProfileServiceImpl implements UserProfileService {
     @Override
     @Transactional
     public EditUserDataDTO updateUserData(EditUserDataDTO dto) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
+        User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new UsernameNotFoundException(currentUsername));
 
-        if (dto.getUsername() != null && !Objects.equals(username, dto.getUsername())) {
+        boolean usernameChanged = false;
+
+        if (dto.getUsername() != null && !Objects.equals(currentUsername, dto.getUsername())) {
             if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
                 throw new UserAlreadyExistException("Username " + dto.getUsername() + " is already taken.");
             }
             user.setUsername(dto.getUsername());
+            usernameChanged = true;
         }
         if (dto.getBioTitle() != null) {
             user.setBioTitle(dto.getBioTitle());
@@ -89,7 +97,24 @@ public class UserProfileServiceImpl implements UserProfileService {
         }
 
         userRepository.save(user);
-        return userProfileMapper.userToEditUserDataDTO(user);
+        EditUserDataDTO responseDTO = userProfileMapper.userToEditUserDataDTO(user);
+        if (usernameChanged) {
+            // Musimy załadować UserDetails na nowo, bo zmienił się username (subject tokena)
+            UserDetails userDetails = customUserDetailService.loadUserByUsername(user.getUsername());
+
+            String newAccessToken = jwtUtil.generateToken(userDetails);
+            String newRefreshToken = jwtUtil.generateRefreshToken(userDetails);
+
+            // Zapisujemy nowy refresh token w bazie danych (ważne!)
+            user.setRefreshToken(newRefreshToken);
+            userRepository.save(user); // Drugi save, aby zaktualizować token w bazie
+
+            // Wkładamy tokeny do DTO
+            responseDTO.setNewAccessToken(newAccessToken);   // To poleci do frontu
+            responseDTO.setNewRefreshToken(newRefreshToken); // To jest ukryte przez @JsonIgnore, ale dostępne w kodzie Javy
+        }
+
+        return responseDTO;
     }
 
     @Override

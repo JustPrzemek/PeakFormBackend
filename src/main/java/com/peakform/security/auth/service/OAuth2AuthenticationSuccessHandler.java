@@ -49,13 +49,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         user.setRefreshToken(refreshToken);
         userRepository.save(user); // Zapisujemy tylko refresh token
 
+        String sameSite = isSecure ? "None" : "Lax";
         // --- POPRAWKA: Używamy ResponseCookie zamiast new Cookie() ---
         ResponseCookie jwtCookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(isSecure)      // Pobieramy z configu (musi być TRUE na Renderze)
                 .path("/api/auth/refresh")
                 .maxAge(7 * 24 * 60 * 60)
-                .sameSite("None")      // KLUCZOWE dla Netlify -> Render
+                .sameSite(sameSite)      // KLUCZOWE dla Netlify -> Render
                 .build();
 
         // Dodajemy ciasteczko jako nagłówek Set-Cookie
