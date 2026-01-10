@@ -2,7 +2,6 @@ package com.peakform.meals.dailyfoodlog.model;
 
 import com.peakform.meals.dailyfoodlog.enums.MealType;
 import com.peakform.meals.product.model.Product;
-import com.peakform.meals.recipe.model.Recipe;
 import com.peakform.security.user.model.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,12 +60,6 @@ public class DailyFoodLog {
     @OnDelete(action = OnDeleteAction.SET_NULL) // DDL: ON DELETE SET NULL
     @ToString.Exclude
     private Product product;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipe_id")
-    @OnDelete(action = OnDeleteAction.SET_NULL) // tutaj tez mam DDL pamietacc to to znaczy ze apbo produkt albo pojedyncza rzecz moze byc w logu
-    @ToString.Exclude
-    private Recipe recipe;
 
     @Positive
     @Column(nullable = false)

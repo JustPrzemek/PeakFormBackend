@@ -43,7 +43,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         }
 
         // sprawdzenie ostatniego czasu
-        if (user.getLastPasswordResetRequest() != null) {
+        if (user.getResetAttemptsToday() == 3) {
             LocalDateTime earliestNext = user.getLastPasswordResetRequest().plusMinutes(10);
             if (earliestNext.isAfter(now)) {
                 long minutesLeft = Duration.between(now, earliestNext).toMinutes();
@@ -62,6 +62,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         user.setPasswordResetToken(hashedToken);
         user.setPasswordResetExpires(LocalDateTime.now().plusMinutes(30));
+        user.setResetAttemptsToday(user.getResetAttemptsToday() + 1);
+        user.setLastPasswordResetRequest(now);
         userRepository.save(user);
 
         // wysłanie maila z linkiem

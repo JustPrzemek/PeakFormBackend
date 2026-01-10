@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 
 @Data
@@ -23,4 +22,5 @@ public class EditUserDataDTO {
     private String newAccessToken;
     @JsonIgnore
     private String newRefreshToken;
+    private String activityLevel;
 }

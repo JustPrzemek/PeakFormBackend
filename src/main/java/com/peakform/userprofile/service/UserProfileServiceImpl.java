@@ -14,6 +14,7 @@ import com.peakform.security.user.service.CustomUserDetailService;
 import com.peakform.userprofile.dto.EditUserDataDTO;
 import com.peakform.userprofile.dto.UserProfileDTO;
 import com.peakform.userprofile.mapper.UserProfileMapper;
+import com.peakform.trainings.enums.ActivityLevel;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,6 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final FollowersRepository followersRepository;
     private final JwtUtil jwtUtil;
     private final CustomUserDetailService customUserDetailService;
-
 
     @Override
     public UserProfileDTO getUserProfile(String username) {
@@ -96,10 +96,20 @@ public class UserProfileServiceImpl implements UserProfileService {
             user.setGoal(dto.getGoal());
         }
 
+        if (dto.getActivityLevel() != null) {
+            try {
+                user.setActivityLevel(ActivityLevel.valueOf(dto.getActivityLevel().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Invalid activity level: " + dto.getActivityLevel());
+            }
+        }
+
         userRepository.save(user);
         EditUserDataDTO responseDTO = userProfileMapper.userToEditUserDataDTO(user);
         if (usernameChanged) {
-            // Musimy załadować UserDetails na nowo, bo zmienił się username (subject tokena)
+            // Musimy załadować UserDetails na nowo, bo zmienił się username (subject
+            // tokena)
             UserDetails userDetails = customUserDetailService.loadUserByUsername(user.getUsername());
 
             String newAccessToken = jwtUtil.generateToken(userDetails);
@@ -110,8 +120,8 @@ public class UserProfileServiceImpl implements UserProfileService {
             userRepository.save(user); // Drugi save, aby zaktualizować token w bazie
 
             // Wkładamy tokeny do DTO
-            responseDTO.setNewAccessToken(newAccessToken);   // To poleci do frontu
-            responseDTO.setNewRefreshToken(newRefreshToken); // To jest ukryte przez @JsonIgnore, ale dostępne w kodzie Javy
+            responseDTO.setNewAccessToken(newAccessToken); // To poleci do frontu
+            responseDTO.setNewRefreshToken(newRefreshToken); // To jest ukryte przez @JsonIgnore, ale dostępne w kodzie
         }
 
         return responseDTO;
@@ -134,7 +144,7 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String oldImageUrl = user.getProfileImageUrl();
-        if(oldImageUrl != null && !oldImageUrl.isEmpty()){
+        if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
             imageUploadService.deleteImage(oldImageUrl);
         }
 

@@ -164,29 +164,6 @@ CREATE INDEX idx_products_name_trgm ON products
     USING GIN (name gin_trgm_ops);
 CREATE INDEX idx_products_external_api_id ON products (external_api_id);
 
-
-CREATE TABLE recipes (
-                         id SERIAL PRIMARY KEY,
-                         user_id BIGINT NOT NULL,
-                         name VARCHAR(255) NOT NULL,
-                         description TEXT,
-                         servings FLOAT NOT NULL DEFAULT 1.0 CHECK (servings > 0),
-
-                         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-
-CREATE TABLE recipe_products (
-                                 id SERIAL PRIMARY KEY,
-                                 recipe_id BIGINT NOT NULL,
-                                 product_id BIGINT NOT NULL,
-                                 quantity FLOAT NOT NULL CHECK (quantity > 0),
-                                 unit VARCHAR(50) NOT NULL DEFAULT 'g',
-
-                                 FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
-                                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-);
-
 CREATE TYPE meal_type_enum AS ENUM ('BREAKFAST', 'LUNCH', 'DINNER', 'SNACK');
 
 
@@ -196,8 +173,7 @@ CREATE TABLE daily_food_log (
                                 date DATE NOT NULL DEFAULT CURRENT_DATE,
                                 meal_type meal_type_enum NOT NULL,
 
-                                product_id BIGINT,
-                                recipe_id BIGINT,
+                                product_id BIGINT NOT NULL,
 
                                 quantity FLOAT NOT NULL CHECK (quantity > 0),
                                 unit VARCHAR(50) NOT NULL, -- 'g', 'ml', 'porcja'
@@ -208,13 +184,7 @@ CREATE TABLE daily_food_log (
                                 fat_eaten FLOAT NOT NULL CHECK (fat_eaten >= 0),
 
                                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
-                                FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE SET NULL,
-
-                                CONSTRAINT chk_log_entry_type CHECK (
-                                    (product_id IS NOT NULL AND recipe_id IS NULL) OR
-                                    (product_id IS NULL AND recipe_id IS NOT NULL)
-                                    )
+                                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_daily_food_log_user_date ON daily_food_log (user_id, date);

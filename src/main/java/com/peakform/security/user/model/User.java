@@ -3,7 +3,6 @@ package com.peakform.security.user.model;
 import com.peakform.comments.model.Comments;
 import com.peakform.followers.model.Followers;
 import com.peakform.meals.dailyfoodlog.model.DailyFoodLog;
-import com.peakform.meals.recipe.model.Recipe;
 import com.peakform.meals.weightlog.model.WeightLog;
 import com.peakform.postlikes.model.PostLikes;
 import com.peakform.posts.model.Post;
@@ -172,10 +171,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<DailyFoodLog> foodLogs = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<Recipe> recipes = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "activity_level", nullable = false)
