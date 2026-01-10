@@ -53,7 +53,7 @@ public class WorkoutPlanExercises {
     @Column(name = "rest_time")
     private Integer restTime;
 
-    @Size(min = 1, max = 20, message = "Day name must be between 1 and 20 characters")
+    @Size(min = 1, max = 50, message = "Day name must be between 1 and 50 characters")
     @Column(name = "day_identifier", nullable = false)
     private String dayIdentifier;
 

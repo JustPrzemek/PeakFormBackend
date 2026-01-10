@@ -22,6 +22,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
@@ -78,59 +79,58 @@ public class AiGenerationService {
         // Budujemy instrukcję dla AI
         return String.format(
                 """
-                Jesteś ekspertem-trenerem personalnym. Twoim zadaniem jest wygenerowanie spersonalizowanego planu treningowego.
-                
-                Oto dane użytkownika:
-                - Cel: %s
-                - Doświadczenie: %s
-                - Ilość dni treningowych w tygodniu: %d
-                - Płeć: %s
-                - Waga: %.1f kg
-                - Wzrost: %.1f cm
-                
-                Oto lista ćwiczeń, których MUSISZ użyć (używaj tylko i wyłącznie ćwiczeń z tej listy, podając ich "id"):
-                %s
-                
-                Zasady:
-                1. Dobierz odpowiednie ćwiczenia do celu (%s) i poziomu (%s).
-                2. Dla ćwiczeń typu "STRENGTH" dobierz "sets", "reps", "restTime".
-                
-                --- NOWE WAŻNE ZASADY ---
-                3. KRYTYCZNE: Wartość "reps" MUSI być liczbą całkowitą (np. 10). NIGDY nie używaj tekstów typu "AMRAP" ani zakresów "10-12". Zawsze podaj jedną, konkretną liczbę powtórzeń.
-                4. KRYTYCZNE: Upewnij się, że wygenerowany JSON jest absolutnie poprawny, bez żadnych dodatkowych spacji w kluczach (np. "reps" jest poprawne, " "reps" jest błędne).
-                --- KONIEC NOWYCH ZASAD ---
-                
-                5. Dla ćwiczeń typu "CARDIO" dobierz "durationMinutes" i opcjonalnie "distanceKm".
-                6. Plan musi zawierać dokładnie %d dni treningowych. Nazwij je (np. A, B, C lub Push, Pull, Legs).
-                
-                Zwróć odpowiedź WYŁĄCZNIE jako obiekt JSON, bez żadnego dodatkowego tekstu ani formatowania markdown.
-                Struktura JSON musi być następująca:
-                
-                {
-                  "planName": "Kreatywna nazwa planu (max 25 znaków)",
-                  "description": "Krótki opis planu i motywacja (max 1000 znaków).",
-                  "days": [
-                    {
-                      "dayIdentifier": "A",
-                      "exercises": [
-                        { "exerciseId": 1, "sets": 3, "reps": 12, "restTime": 60 },
-                        { "exerciseId": 2, "sets": 3, "reps": 10, "restTime": 90 },
-                        { "exerciseId": 26, "durationMinutes": 20 }
-                      ]
-                    },
-                    {
-                      "dayIdentifier": "B",
-                      "exercises": [ ... ]
-                    }
-                  ]
-                }
-                """,
+                        Jesteś ekspertem-trenerem personalnym. Twoim zadaniem jest wygenerowanie spersonalizowanego planu treningowego.
+
+                        Oto dane użytkownika:
+                        - Cel: %s
+                        - Doświadczenie: %s
+                        - Ilość dni treningowych w tygodniu: %d
+                        - Płeć: %s
+                        - Waga: %.1f kg
+                        - Wzrost: %.1f cm
+
+                        Oto lista ćwiczeń, których MUSISZ użyć (używaj tylko i wyłącznie ćwiczeń z tej listy, podając ich "id"):
+                        %s
+
+                        Zasady:
+                        1. Dobierz odpowiednie ćwiczenia do celu (%s) i poziomu (%s).
+                        2. Dla ćwiczeń typu "STRENGTH" dobierz "sets", "reps", "restTime".
+
+                        --- NOWE WAŻNE ZASADY ---
+                        3. KRYTYCZNE: Wartość "reps" MUSI być liczbą całkowitą (np. 10). NIGDY nie używaj tekstów typu "AMRAP" ani zakresów "10-12". Zawsze podaj jedną, konkretną liczbę powtórzeń.
+                        4. KRYTYCZNE: Upewnij się, że wygenerowany JSON jest absolutnie poprawny, bez żadnych dodatkowych spacji w kluczach (np. "reps" jest poprawne, " "reps" jest błędne).
+                        --- KONIEC NOWYCH ZASAD ---
+
+                        5. Dla ćwiczeń typu "CARDIO" dobierz "durationMinutes" i opcjonalnie "distanceKm".
+                        6. Plan musi zawierać dokładnie %d dni treningowych. Nazwij je (np. A, B, C lub Push, Pull, Legs).
+
+                        Zwróć odpowiedź WYŁĄCZNIE jako obiekt JSON, bez żadnego dodatkowego tekstu ani formatowania markdown.
+                        Struktura JSON musi być następująca:
+
+                        {
+                          "planName": "Kreatywna nazwa planu (max 25 znaków)",
+                          "description": "Krótki opis planu i motywacja (max 1000 znaków).",
+                          "days": [
+                            {
+                              "dayIdentifier": "A (max 15 znaków)",
+                              "exercises": [
+                                { "exerciseId": 1, "sets": 3, "reps": 12, "restTime": 60 },
+                                { "exerciseId": 2, "sets": 3, "reps": 10, "restTime": 90 },
+                                { "exerciseId": 26, "durationMinutes": 20 }
+                              ]
+                            },
+                            {
+                              "dayIdentifier": "B",
+                              "exercises": [ ... ]
+                            }
+                          ]
+                        }
+                        """,
                 request.getGoal(), request.getExperience(), request.getDaysPerWeek(),
                 user.getGender(), user.getWeight(), user.getHeight(),
                 exercisesJson,
                 request.getGoal(), request.getExperience(),
-                request.getDaysPerWeek()
-        );
+                request.getDaysPerWeek());
     }
 
     private String callGeminiApi(String prompt) {
@@ -152,6 +152,10 @@ public class AiGenerationService {
                 throw new RuntimeException("API Gemini zwróciło pustą odpowiedź.");
             }
             return response.getFirstPartText();
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            throw new RuntimeException(
+                    "Serwer AI jest obecnie przeciążony (wyczerpano limit zapytań). Spróbuj ponownie za około minutę.",
+                    e);
         } catch (Exception e) {
             // Tutaj obsłuż błędy API (np. przekroczony limit, zły klucz)
             throw new RuntimeException("Błąd podczas wywołania API Gemini: " + e.getMessage(), e);
@@ -182,12 +186,18 @@ public class AiGenerationService {
             for (AiPlanResponseDto.AiExercise aiEx : day.getExercises()) {
                 // Musimy pobrać pełną encję ćwiczenia z naszej bazy
                 Exercises exercise = exercisesRepository.findById(aiEx.getExerciseId())
-                        .orElseThrow(() -> new RuntimeException("AI zwróciło nieistniejące ćwiczenie o ID: " + aiEx.getExerciseId()));
+                        .orElseThrow(() -> new RuntimeException(
+                                "AI zwróciło nieistniejące ćwiczenie o ID: " + aiEx.getExerciseId()));
 
                 WorkoutPlanExercises wpe = new WorkoutPlanExercises();
                 wpe.setWorkoutPlans(savedPlan);
                 wpe.setExercises(exercise);
-                wpe.setDayIdentifier(day.getDayIdentifier());
+                // Zapisujemy Day Identifier - upewniamy się, że nie przekracza 50 znaków
+                String dayId = day.getDayIdentifier();
+                if (dayId != null && dayId.length() > 50) {
+                    dayId = dayId.substring(0, 50);
+                }
+                wpe.setDayIdentifier(dayId != null ? dayId : "Day A");
 
                 // Zapisujemy parametry w zależności od typu
                 if ("STRENGTH".equalsIgnoreCase(exercise.getType())) {
